@@ -1,6 +1,4 @@
-<<<<<<< HEAD
-hello world
-=======
+
 # I. Introduction
 -----
 
@@ -773,4 +771,3 @@ JsonObject jo = Json.createObjectBuilder().add("status","APPR").add("memo","appr
 ```java
 re.invokeAction("wsmethod:changeStatus", jo);
 ```
->>>>>>> 37359d6f814c6c139aa60291bdc651f7be343df4
