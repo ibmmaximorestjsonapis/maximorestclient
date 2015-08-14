@@ -79,7 +79,7 @@ import javax.json.*;
  * </code>
  * </pre>
  *
- * <p>The following example show how to get attachmentSet, relatedResource and how to invoke action by {@code Resource)</p>
+ * <p>The following example show how to get attachmentSet, relatedResource and how to invoke action by {@code Resource}</p>
  * <pre><code>
  * AttachmentSet ats = re.attachmentSet(doclinkAttrName, relName);
  * Resource relationRe = re.relatedResource(attrName);

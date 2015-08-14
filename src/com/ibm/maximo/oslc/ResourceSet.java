@@ -243,7 +243,6 @@ public class ResourceSet {
 	/**
 	 * Fetching the data for ResourceSet
 	 * 
-	 * @param options
 	 * 
 	 * @throws OslcException
 	 * @throws IOException
@@ -353,7 +352,6 @@ public class ResourceSet {
 
 	/**
 	 * 
-	 * @param savedName
 	 * 
 	 * @throws DatatypeConfigurationException
 	 * @throws UnsupportedEncodingException
