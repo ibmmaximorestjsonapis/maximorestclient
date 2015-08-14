@@ -25,7 +25,7 @@ Currently the only supported data format is JSON and we have 2 flavors of JSON â
 # II. Install
 -----
 ## 2.1 As a Maven dependency
-### 2.1.1 Central repository
+### 2.1.1 Central repository (Coming) 
 
 Maximo Rest Client is available in Maven Central repository as an open source artifact. It can be included in a Maven project easily by adding the dependency to the project. The Maven will deal with the maven transitive dependencies automatically.
 
