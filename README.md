@@ -1,4 +1,3 @@
-* [Introduction](#I. Introduction)
 
 # I. Introduction
 -----
