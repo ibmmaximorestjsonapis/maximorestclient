@@ -7,11 +7,20 @@ The Maximo REST client library provides a set of driver API's which can be consu
 The main components of this client library include:
 	
 * [MaximoConnector (com.ibm.maximo.oslc.MaximoConnector)] - The driver api that establishes the authenticated HTTP session with the Maximo server. It is used by the other apis to create,update,delete and fetch Maximo data. This component can be configured using an [Options (com.ibm.maximo.oslc.Options)] object.  
-* [ResourceSet (com.ibm.maximo.oslc.ResourceSet)] - This api represents a collection of Maximo resources of a given type. The type is determined by the Object Structure definition it refers to. In effect this api is equivalent to the concept of Maximo MboSet's (note these apis applies to Object Strcutures and not directly to Mbos). 
-* [Resource (com.ibm.maximo.oslc.Resource)] - Each member of a ResourceSet is represented by an instance of this class. This is equivalent to to the concept of Mbo in Maximo (note these apis applies to Object Structures and not directly to Mbos). 
+* [ResourceSet (com.ibm.maximo.oslc.ResourceSet)] - This api represents a collection of Maximo resources of a given type. The type is determined by the Object Structure definition it refers to. In effect this api is equivalent to the concept of Maximo MboSet's 
+
+> **note**: these apis applies to Object Strcutures and not directly to Mbos. 
+
+* [Resource (com.ibm.maximo.oslc.Resource)] - Each member of a ResourceSet is represented by an instance of this class. This is equivalent to to the concept of Mbo in Maximo 
+
+> **note**: these apis applies to Object Structures and not directly to Mbos. 
+
 * [Attachment (com.ibm.maximo.oslc.Attachment)] and [AttachmentSet (com.ibm.maximo.oslc.AttachmentSet)] - These apis represent the attached docs (doclinks) in Maximo. These are always associated with some Resource. 
 
+
+
 Currently the only supported data format is JSON and we have 2 flavors of JSON – the namespaced and the lean. The lean format is supported only starting the 7.6.0.1 base Maximo release and is the recommended format to use (as it uses less bandwidth).
+
 # II. Install
 -----
 ## 2.1 As a Maven dependency
@@ -299,7 +308,7 @@ JsonArray wpLaborArray = Json.createArrayBuilder().add(wplJo).build();
 jo.add("wplabor",wpLaborArray );
 ```
 
-Note the sample uses the lean format.
+> **note**the sample uses the lean format.
 
 ### 3.2.3 Return with the Properties
 By default, the create operation will not return any content of the new created work order. Since attribute values get defaulted or even auto-generated at the server side based on Maximo business logic, it often makes sense to get the final representation of the newly created resource.
@@ -354,13 +363,13 @@ The update api will see that the request does not contain wplabor#1 and hence it
 
 And the new poline group will be
 
-poline#2, poline#3, poline#N
+> **poline#2, poline#3, poline#N**
 
 So if we used merge() for this - the only difference would be that wplabor#1 would have not been deleted.
 
 And the new poline group will be
 
-poline#1, poline#2, poline#3, poline#N
+> **poline#1, poline#2, poline#3, poline#N**
 
 ### 3.3.1 Update the poline in Purchase Order
 
