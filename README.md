@@ -79,13 +79,15 @@ The Options is the configuration for MaximoConnector. It is nessesary to setup a
 
 * For authentication, it needs username, password and authentication way among "maxauth", "basic" and "form". The sample code is as following,
 
-  * For non-mt,
+For non-mt,
 
 ```java
 Options option = new Options().user("maxadmin").password("maxadmin").auth("maxauth");
 ```
-  * For mt,
+
+For mt,
   
+
 ```java
 Options option = new Options().user("maxadmin").password("maxadmin").mt(true).tenantCode("00").auth("maxauth");
 ```
@@ -113,13 +115,14 @@ mc.connect();
 ### 3.1.2 Fetch the Work Orders
 
 * Create a ResourceSet for Work Order Set. 
-  * By object structure name:
+
+By object structure name:
   
 ```java
 ResourceSet rs = mc.resourceSet("mxwodetail").select("wonum","status").where("status").equalTo("APPR").fetch();
 ```
 
-  * By RESTful URI :
+By RESTful URI :
   
 ```java
 ResourceSet rs = mc.resourceSet(new URL("http://host:port/maximo/oslc/os/mxwodetail")).select("wonum","status").where("status").equalTo("APPR").fetch();
@@ -161,19 +164,20 @@ byte[] jodata = rs.toJSONBytes();
 ```
 
 * Then use the Resource to get the specific work order, 
-  * By specific URI:
+
+By specific URI:
   
 ```java
 String woUri = "http://host/maximo/oslc/os/mxwodetail/_QkVERk9SRC8xMDAw";
 ```
 
-  * Using ResourceSet
+Using ResourceSet
   
 ```java
 Resource re = rs.fetchMember(woUri);
 ```
 
-  * Or using MaximoConnector
+Or using MaximoConnector
   
 ```java
 MaximoConnector mc = new MaximoConnector(new Options().user("maxadmin").password("maxadmin").lean(true).auth("maxauth").host("host").port(7001));
@@ -181,19 +185,19 @@ mc.connect();
 Resource re = mc.resource(woUri);
 ```
 
-  * By index (this will fetch the member resource from the resourceset collection and will not make a trip to the server):
+By index (this will fetch the member resource from the resourceset collection and will not make a trip to the server):
   
 ```java
 Resource re = rs.member(0);
 ```
 
-In order to fetch more data from the server for this resource, consider using the load() and reload() apis on the Resource.
+* In order to fetch more data from the server for this resource, consider using the load() and reload() apis on the Resource.
 
 ```java
 re.reload("wonum","status","assetnum","location","wplabor.craft");
 ```
 
-  * OR simply
+OR simply
   
 ```java
 re.reload("*");
@@ -272,14 +276,15 @@ ResourceSet rs = mc.resourceSet("mxwodetail");
 
 ### 3.2.2 Create a new Work Order
 * Create a valid JSON object with the essential information like siteid for BEDFORD
-  * For non-lean, add the prefix before the attribute:
+
+For non-lean, add the prefix before the attribute:
   
 ```java
 JsonObject jo = Json.createObjectBuilder().add("spi:siteid", "BEDFORD").add("spi:description", "test").build();
 Resource re = rs.create(jo);
 ```
 
-  * For lean, skip the prefix, using the attribute directly:
+For lean, skip the prefix, using the attribute directly:
   
 ```java
 JsonObject jo = Json.createObjectBuilder().add("siteid", "BEDFORD").add("description", "test").build();
@@ -300,23 +305,26 @@ Note the sample uses the lean format.
 By default, the create operation will not return any content of the new created work order. Since attribute values get defaulted or even auto-generated at the server side based on Maximo business logic, it often makes sense to get the final representation of the newly created resource.
 
 Instead of re-selecting the work order again (which makes a round-trip to the server), it is easy to get the content in response information while we create a new work order by Maximo Rest Client.
-- For non-lean ,
+
+For non-lean ,
 
 ```java
 Resource re = rs.create(jo,"spi:wonum", "spi:status","spi:statusdate","spi:description");
 ```
-- or simply
+
+or simply
 		
 ```java
 Resource re = rs.create(jo,"*");
 ```
 
--For lean,
+For lean,
 
 ```java
 Resource re = rs.create(jo,"wonum", "status","statusdate", "description");
 ```
-  or simply
+ 
+or simply
   
 ```java
 Resource re = rs.create(jo,"*");
@@ -488,25 +496,26 @@ ResourceSet rs = mc.resourceSet("mxsr").
 ```
 
 * Get an existing Service Request
-  * By specific URI:
+
+By specific URI:
   
 ```java
 String venUri = "http://localhost:7001/maximo/oslc/os/mxsr/_U1IvMTE3Mw--";
 ```
 
-  * Using ResourceSet
+Using ResourceSet
   
 ```java
 Resource re = rs.fetchMember(srUri);
 ```
 
-  * Or using MaximoConnector
+Or using MaximoConnector
   
 ```java
 Resource re = mc.resource(srUri);
 ```
 
-  * By index:
+By index:
   
 ```java
 Resource re = rs.member(0);
@@ -544,25 +553,25 @@ ResourceSet rs = mc.resourceSet("mxwodetail").
 
 * Get an existing work order form work order set.
 
-  * By specific URI:
+By specific URI:
   
 ```java
 String woUri = "http://host/maximo/oslc/os/mxwodetail/_QkVERk9SRC8xMDAw";
 ```
 
-  * Using ResourceSet
+Using ResourceSet
   
 ```java 
 Resource re = rs.fetchMember(woUri);
 ```
 
-  * Or using MaximoConnector
+using MaximoConnector
   
 ```java
 Resource re = mc.resource(woUri);
 ```
 
-  * By index (be careful with the range):
+By index (be careful with the range):
   
 ```java 	
 Resource re = rs.member(0);
@@ -588,13 +597,14 @@ Attachment att = new Attachment().name("attachment.txt").description("test").dat
 ```
 
 * Attach the file to the work order
-  * By default,
+
+By default,
   
 ```java
 att = ats.create(att);
 ```
 
-  * For the custom property name for doclinks such as "customdoclink",
+For the custom property name for doclinks such as "customdoclink",
   
 ```java
 att = ats.create("customdoclink",att);
@@ -632,24 +642,26 @@ JsonObject attMeta = mc.attachmentDocMeta(attUri);
 
 ### 3.5.3 Delete an attachment
 * Get an existing work order form work order set.
-  * By specific URI:
+
+By specific URI:
   
 ```java
 String woUri = "http://host/maximo/oslc/os/mxwodetail/_QkVERk9SRC8xMDAw";
 ```
 
-  * Using ResourceSet
+Using ResourceSet
   
 ```java
 Resource re = rs.fetchMember(woUri);
 ```
 
-  * Or using MaximoConnector
+Or using MaximoConnector
+
 ```java
 Resource re = mc.resource(woUri);
 ```
 
-  * By index (be careful with the range):
+By index (be careful with the range):
   
 ```java
 Resource re = rs.member(0);
@@ -662,36 +674,39 @@ AttachmentSet ats = re.attachmentSet();
 ```
 
 * Get the Attachment from AttachmentSet
-  * By index
+
+By index
   
 ```java
 Attachment att = ats.member(0);
 ```
 
-  * By specific URI:
+By specific URI:
   
 ```java
 String attUri = "http://host/maximo/oslc/os/mxwodetail/_QkVERk9SRC8xMDAw/DOCLINKS/28";
 ```
 
-  * Using AttachmentSet
+Using AttachmentSet
   
 ```java  
 Attachment att = ats.fetchMember(attUri);
 ```
 
-  * Or using MaximoConnector
+Or using MaximoConnector
   
 ```java 	
 Attachment att  = mc.attachment(attUri);
 ```
 * Delete the Attachment
-  * Using Attachment (useful when you already have the attachment)
+
+Using Attachment (useful when you already have the attachment)
   
 ```java
 att.delete();
 ```
-  * Using MaximoConnector (useful when you just have the uri)
+
+Using MaximoConnector (useful when you just have the uri)
   
 ```java
 mc.deleteAttachment(attUri);
