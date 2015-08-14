@@ -1,3 +1,4 @@
+* [Introduction](#I. Introduction)
 
 # I. Introduction
 -----
@@ -308,7 +309,7 @@ JsonArray wpLaborArray = Json.createArrayBuilder().add(wplJo).build();
 jo.add("wplabor",wpLaborArray );
 ```
 
-> **note**the sample uses the lean format.
+> **note**: the sample uses the lean format.
 
 ### 3.2.3 Return with the Properties
 By default, the create operation will not return any content of the new created work order. Since attribute values get defaulted or even auto-generated at the server side based on Maximo business logic, it often makes sense to get the final representation of the newly created resource.
