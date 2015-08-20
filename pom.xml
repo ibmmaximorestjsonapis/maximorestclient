@@ -8,6 +8,7 @@
 
 	<name>maximo-rest-client</name>
 	<description>maximo rest client</description>
+	<url>http://www.ibm.com</url>
 
 	<licenses>
 		<license>
@@ -16,6 +17,10 @@
 		</license>
 	</licenses>
 
+	<scm>
+		<url>https://github.com/zhengy90/maximorestclient</url>
+	</scm>
+	
 	<developers>
 		<developer>
 			<name>Anamitra Bhattacharyya</name>
@@ -55,6 +60,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
+				<version>2.2.1</version>
 				<executions>
 					<execution>
 						<id>sources</id>
@@ -77,6 +83,31 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>1.6</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
+	
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
 </project>
