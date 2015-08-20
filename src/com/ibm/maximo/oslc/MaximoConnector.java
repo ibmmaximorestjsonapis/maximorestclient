@@ -774,7 +774,7 @@ public class MaximoConnector {
 				userInfoUri = userInfoObj.getString("href");
 			}
 		}else if(oslcHome.containsKey("whoami")){
-			userInfoObj = oslcHome.getJsonObject("userInfo");
+			userInfoObj = oslcHome.getJsonObject("whoami");
 			if(userInfoObj.containsKey("href")){
 				userInfoUri = userInfoObj.getString("href");
 			}
