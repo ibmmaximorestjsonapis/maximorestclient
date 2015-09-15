@@ -275,7 +275,7 @@ public class Attachment {
 		String[] temp = this.uri.split("/");
 		for(String str:temp){
 			metauri.append(str).append("/");
-			if(str.equals("DOCLINKS")){
+			if(str.equalsIgnoreCase("DOCLINKS")){
 				metauri.append("meta").append("/");
 			}
 		}

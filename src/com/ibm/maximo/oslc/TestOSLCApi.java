@@ -34,93 +34,13 @@ import com.ibm.maximo.oslc.ResourceSet;
 import com.ibm.maximo.oslc.SavedQuery;
 import com.ibm.maximo.oslc.Util;
 
+/**
+ * Note: the create/update/delete operation will cause the data change.
+ * @author zhengy
+ *
+ */
+
 public class TestOSLCApi{
-
-	// MultiThread
-	private static class ClientThread extends Thread {
-		MaximoConnector mc = null;
-
-		public ClientThread(String str, MaximoConnector mc) {
-			super(str);
-			this.mc = mc;
-		}
-
-		@Override
-		public void run() {
-			try {
-
-				ResourceSet set2 = mc.resourceSet("MXWODETAIL")
-						.select("wonum", "status", "statusdate")
-						.pageSize(50).fetch(null);
-				Util.jsonPrettyPrinter(set2.totalCount());
-				JsonObject jo = Json.createObjectBuilder()
-						.add("siteid", "BEDFORD").add("description", "test")
-						.build();
-
-				JsonObject jo2 = Json.createObjectBuilder()
-						.add("spi:escription", "test2").build();
-
-				Resource res3 = set2.create(jo, "wonum", "status",
-						"statusdate", "description");
-				String link = res3.getURI();
-				Resource res4 = mc.resource(link);
-				// Util.jsonPrettyPrinter(res3.toJSON());
-				res3.load("wonum", "status", "statusdate", "description");
-				res4.load("wonum", "status", "statusdate", "description");
-				res3.update(jo2);
-				Util.jsonPrettyPrinter(res3.reload().toJSON());
-				Util.jsonPrettyPrinter(res4.reload().toJSON());
-
-				res3.delete();
-				Util.jsonPrettyPrinter(set2.totalCount());
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	public static class UpdateThread extends Thread {
-		MaximoConnector mc = null;
-
-		public UpdateThread(String str, MaximoConnector mc) {
-			super(str);
-			this.mc = mc;
-		}
-
-		@Override
-		public void run() {
-			try {
-
-				ResourceSet set2 = mc
-						.resourceSet("MXWODETAIL")
-						.select("spi:wonum", "spi:status", "spi:statusdate")
-						.where(new QueryWhere().where("spi:status").equalTo(
-								"WAPPR")).pageSize(50).fetch(null);
-				Util.jsonPrettyPrinter(set2.count());
-				JsonObject jo2 = Json.createObjectBuilder()
-						.add("spi:description", "test2").build();
-				JsonObject jo3 = Json.createObjectBuilder()
-						.add("spi:description", "test3").build();
-
-				Resource res3 = set2.member(0);
-				String link = res3.getURI();
-				Resource res4 = mc.resource(link);
-				// Util.jsonPrettyPrinter(res3.toJSON());
-				res3.load("spi:wonum", "spi:status", "spi:statusdate",
-						"spi:description");
-				res4.load("spi:wonum", "spi:status", "spi:statusdate",
-						"spi:description");
-				res3.update(jo2);
-				res4.update(jo3);
-				Util.jsonPrettyPrinter(res3.reload("spi:description").toJSON());
-				Util.jsonPrettyPrinter(res4.reload("spi:description").toJSON());
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
 
 	public static void main(String[] args) throws OslcException, IOException,
 			InterruptedException, DatatypeConfigurationException {
@@ -136,33 +56,27 @@ public class TestOSLCApi{
 				.select("spi:wonum", "spi:status", "spi:statusdate")
 				.pageSize(2000).fetch(null);
 		Util.jsonPrettyPrinter(set2.count());
-		// Example for for CREATE and DELETE
-//		Util.jsonPrettyPrinter("*******************Example for for CREATE and DELETE******************");
-//		if(mc.getOptions().isLean()){
-//			java.util.List<ClientThread> list = new java.util.ArrayList<ClientThread>();
-//
-//			for (int i = 1; i < 20; i++) {
-//				ClientThread c = new ClientThread(String.valueOf(i), mc);
-//				list.add(c);
-//				c.start();
-//			}
-//
-//			for (ClientThread c : list) {
-//				c.join();
-//			}
-//		}else{
-//			java.util.List<UpdateThread> list = new java.util.ArrayList<UpdateThread>();
-//
-//			for (int i = 1; i < 20; i++) {
-//				UpdateThread c = new UpdateThread(String.valueOf(i), mc);
-//				list.add(c);
-//				c.start();
-//			}
-//
-//			for (UpdateThread c : list) {
-//				c.join();
-//			}
-//		}
+		// Example for for CREATE and DELETE *multi thread
+		Util.jsonPrettyPrinter("*******************Example for for CREATE and DELETE******************");
+		Util.jsonPrettyPrinter(set2.totalCount());
+		JsonObject jo = Json.createObjectBuilder()
+				.add("siteid", "BEDFORD").add("description", "test")
+				.build();
+
+		JsonObject jo2 = Json.createObjectBuilder()
+				.add("spi:escription", "test2").build();
+
+		Resource res3 = set2.create(jo, "wonum", "status",
+				"statusdate", "description");
+		String link = res3.getURI();
+		Resource res4 = mc.resource(link);
+		res3.load("wonum", "status", "statusdate", "description");
+		res4.load("wonum", "status", "statusdate", "description");
+		res3.update(jo2);
+
+		//Example for delete
+		res4.delete();
+		Util.jsonPrettyPrinter(set2.totalCount());
 		
 		//Example for update(patch/merge);
 		ResourceSet reSet = mc.resourceSet("MXPO").fetch();
@@ -191,13 +105,7 @@ public class TestOSLCApi{
 		poRes.merge(polineObj3);
 		Util.jsonPrettyPrinter(poRes.toJSON().get("poline"));
 		
-		//Example for DELETE
-		
-		ResourceSet vendorSet = mc.resourceSet("mxsr").fetch();
-		Resource vendor = vendorSet.member(vendorSet.count()-1);
-		vendor.delete();
-		
-		
+			
 		// Example for WHERE
 		ResourceSet set3 = mc
 				.resourceSet("MXWODETAIL")
@@ -215,9 +123,9 @@ public class TestOSLCApi{
 		Util.jsonPrettyPrinter(set3.count());		
 		Resource re = set3.member(0);
 		Util.jsonPrettyPrinter(re.toJSON());
-		JsonObject jo = Json.createObjectBuilder()
+		JsonObject joAction = Json.createObjectBuilder()
 				.add("status", "APPR").build();
-		re.invokeAction("wsmethod:changeStatus", jo);
+		re.invokeAction("wsmethod:changeStatus", joAction);
 		Util.jsonPrettyPrinter(re.toJSON());
 		
 		
@@ -231,6 +139,17 @@ public class TestOSLCApi{
 		Util.jsonPrettyPrinter(set.nextPage().toJSON());
 		Util.jsonPrettyPrinter(set.previousPage().toJSON());
 		Util.jsonPrettyPrinter(set3.count());
+		
+		
+		//Example for StablePaging
+		ResourceSet spSet = mc.resourceSet("MXSR")
+				.select("spi:description", "spi:ticketid").pageSize(2).stablePaging(true)
+				.fetch(null);
+		Util.jsonPrettyPrinter("*******************Example for NEXTPAGE/PREVIOUSPAGE******************");
+		Util.jsonPrettyPrinter(new String(spSet.toJSONBytes()));
+		Util.jsonPrettyPrinter(spSet.nextPage().toJSON());
+		spSet.nextPage();
+		
 
 		// Example for ATTACHMENT/ATTACHMENTSET
 		Util.jsonPrettyPrinter("*******************Example for ATTACHMENT/ATTACHMENTSET******************");
@@ -242,7 +161,7 @@ public class TestOSLCApi{
 		byte[] data = str.getBytes("utf-8");
 		Attachment att = new Attachment().name("attachment.txt")
 				.description("test").data(data).meta("FILE", "Attachments");
-		att = ats.create("DOCLINKS", att);
+		att = ats.create(att);
 		Util.jsonPrettyPrinter(new String(att.toDoc(), "utf-8"));
 		
 		String str2 = "hello world @ "
@@ -255,7 +174,7 @@ public class TestOSLCApi{
 		
 		String str3 = "hello world @ "
 				+ Calendar.getInstance().getTime().toString();
-		byte[] data3 = str2.getBytes("utf-8");
+		byte[] data3 = str3.getBytes("utf-8");
 		Attachment att3 = new Attachment().name("attachment.txt")
 				.description("test").data(data3).meta("FILE", "Attachments");
 		att3= ats.create(att3);
@@ -270,9 +189,7 @@ public class TestOSLCApi{
 		Util.jsonPrettyPrinter(new String(att2.toDoc(), "utf-8"));
 		Util.jsonPrettyPrinter(new String(mc.getAttachmentData(att2.getURI()),"utf-8"));
 		
-		// *need DOCLINKS
-		//Delete by Attachment
-		att.delete();
+
 		
 		//Delete by MaximoConnector
 		mc.deleteAttachment(att2.getURI());
@@ -305,6 +222,17 @@ public class TestOSLCApi{
 						"assetnum.assettag").pageSize(5).fetch(null);
 		Util.jsonPrettyPrinter(set4.totalCount());
 
+
+
+		// Example for Disconnect
+		Util.jsonPrettyPrinter("*******************Example for Disconnect******************");
+		mc.disconnect();
+		mc.connect();
+		
+		// *need DOCLINKS
+		//Delete by Attachment
+		att.delete();
+		
 		// Example for SAVEDQUERY *need existed savequery
 		Util.jsonPrettyPrinter("*******************Example for SAVEDQUERY******************");
 		ResourceSet set5 = mc
@@ -324,10 +252,6 @@ public class TestOSLCApi{
 				.select("spi:description", "spi:ticketid").pageSize(5)
 				.fetch(null);
 		Util.jsonPrettyPrinter(set6.toJSON());
-
-		// Example for Disconnect
-		Util.jsonPrettyPrinter("*******************Example for Disconnect******************");
-		mc.disconnect();
-		mc.connect();
+		
 	}
 }

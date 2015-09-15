@@ -196,7 +196,7 @@ public class AttachmentSet {
 	}
 	
 	public Attachment create(String relation,Attachment att) throws IOException, OslcException{
-		if(!this.href.contains(relation)){
+		if(!this.href.contains(relation.toLowerCase()) || !this.href.contains(relation.toUpperCase())){
 			this.href+="/"+relation;
 		}
 		JsonObject obj = this.mc.createAttachment(this.href,att.toDoc(), att.getName(),att.getDescription(),att.getMeta());
