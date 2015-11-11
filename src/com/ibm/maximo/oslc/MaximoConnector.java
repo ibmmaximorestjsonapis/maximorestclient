@@ -242,8 +242,8 @@ public class MaximoConnector {
 			cookies = con.getHeaderFields().get("Set-Cookie");
 			JsonObject oslcHome = this.get(this.options.getAppURI());
 			if(oslcHome!=null){
-				this.version(oslcHome);
-				this.userInfo(oslcHome);
+				// this.version(oslcHome);
+				// this.userInfo(oslcHome);
 			}
 		}
 		if (cookies == null) {
@@ -740,7 +740,7 @@ public class MaximoConnector {
 		}
 	}
 	
-	
+	/*
 	private MaximoConnector version(JsonObject oslcHome) throws IOException, OslcException{
 		JsonObject versionObj = null;
 		String versionUri = null;
@@ -792,6 +792,7 @@ public class MaximoConnector {
 	public JsonObject getUserInfo(){
 		return this.userInfo;
 	}
+	*/
 	
 	/**
 	 * Disconnect with Maximo Server
