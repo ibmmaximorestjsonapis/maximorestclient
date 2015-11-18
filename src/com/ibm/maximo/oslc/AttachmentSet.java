@@ -12,6 +12,7 @@ package com.ibm.maximo.oslc;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Map;
 
 import javax.json.*;
 /**
@@ -169,10 +170,20 @@ public class AttachmentSet {
 	 * @throws OslcException
 	 */
 	public AttachmentSet load() throws IOException, OslcException{
+		this.load(null);
+		return this;
+	}
+	
+	public AttachmentSet load(Map<String ,Object> headers) throws IOException, OslcException{
 		if(isLoaded){
 			return this;
 		}
-		this.jo = this.mc.get(this.href);
+		if(headers!=null && !headers.isEmpty()){
+			this.jo = this.mc.get(this.href,headers);
+		}else{
+			this.jo = this.mc.get(this.href);
+		}
+		
 		isLoaded = true;
 		return this;
 	}
@@ -200,6 +211,19 @@ public class AttachmentSet {
 			this.href+="/"+relation;
 		}
 		JsonObject obj = this.mc.createAttachment(this.href,att.toDoc(), att.getName(),att.getDescription(),att.getMeta());
+		return new Attachment(obj,this.mc);
+	}
+	
+	public Attachment create(String relation,Attachment att, Map<String, Object> headers) throws IOException, OslcException{
+		if(!this.href.contains(relation.toLowerCase()) || !this.href.contains(relation.toUpperCase())){
+			this.href+="/"+relation;
+		}
+		JsonObject obj;
+		if(headers != null && !headers.isEmpty()){
+			obj = this.mc.createAttachment(this.href,att.toDoc(), att.getName(),att.getDescription(),att.getMeta(), headers);
+		}else{
+			obj = this.mc.createAttachment(this.href,att.toDoc(), att.getName(),att.getDescription(),att.getMeta());
+		}
 		return new Attachment(obj,this.mc);
 	}
 	
@@ -285,12 +309,14 @@ public class AttachmentSet {
 		return size;
 	}
 	
-	public Attachment fetchMember(String uri, String... properties)
-			throws IOException, OslcException {
+	public Attachment fetchMember(String uri, String... properties)throws IOException, OslcException {	
+		return this.fetchMember(uri, null, properties);
+	}
+	
+	public Attachment fetchMember(String uri, Map<String, Object> headers, String... properties)throws IOException, OslcException {
 		StringBuilder strb = new StringBuilder().append(uri);
 		if (properties.length > 0) {
-			strb.append(uri.contains("?") ? "" : "?").append(
-					"&oslc.properties=");
+			strb.append(uri.contains("?") ? "" : "?").append("&oslc.properties=");
 			for (String property : properties) {
 				strb.append(property).append(",");
 			}
@@ -302,7 +328,12 @@ public class AttachmentSet {
 		String id = strs[strs.length-1];
 		String metaUri = strb.toString().replace(id, "meta");
 		metaUri = metaUri + "/" + id;
-		JsonObject jo = this.mc.get(metaUri);
+		JsonObject jo;
+		if(headers != null && !headers.isEmpty()){
+			jo = this.mc.get(metaUri, headers);
+		}else{
+			jo = this.mc.get(metaUri);
+		}
 		return new Attachment(jo, this.mc);
 	}
 }

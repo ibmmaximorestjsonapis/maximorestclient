@@ -252,6 +252,73 @@ public class ResourceSet {
 		this.fetch(null);
 		return this;
 	}
+	
+	/**
+	 * Fetching the data for ResourceSet with arbitrary parameters
+	 * 
+	 * 
+	 * @param additionalParams
+	 * 
+	 * @throws OslcException
+	 * @throws IOException
+	 */
+	
+	public ResourceSet fetchWithAddtionalParams(Map<String, Object> additionalParams) throws OslcException, IOException {
+		return this.fetchWithAddtionalHeadersAndParams(additionalParams, null);
+	}
+	
+	/**
+	 * Fetching the data for ResourceSet with arbitrary headers
+	 * 
+	 * 
+	 * @param additionalHeaders
+	 * 
+	 * @throws OslcException
+	 * @throws IOException
+	 */
+	
+	public ResourceSet fetchWithAddtionalHeaders(Map<String, Object> additionalHeaders) throws OslcException, IOException {
+		return this.fetchWithAddtionalHeadersAndParams(null, additionalHeaders);
+	}
+	
+	/**
+	 * Fetching the data for ResourceSet with arbitrary parameters and headers
+	 * 
+	 * 
+	 * @param additionalParams
+	 * @param additionalHeaders
+	 * 
+	 * @throws OslcException
+	 * @throws IOException
+	 */
+	
+	public ResourceSet fetchWithAddtionalHeadersAndParams(Map<String, Object> additionalParams, Map<String, Object> additionalHeaders) throws OslcException, IOException {
+		this.buildURI();
+		StringBuilder strb = new StringBuilder();
+		strb.append(this.appURI);
+		if(!this.appURI.contains("?")){
+			strb.append("?");
+		}
+		if(additionalParams != null && !additionalParams.isEmpty()){
+			Set<Map.Entry<String, Object>> entrySet = additionalParams.entrySet();
+			for(Map.Entry<String, Object> entry: entrySet){
+				StringBuilder singleParam = new StringBuilder();
+				singleParam.append("&").append(entry.getKey()).append("=");
+				singleParam.append(Util.urlEncode(entry.getValue().toString()));
+				strb.append(singleParam.toString());
+			}
+		}
+		this.appURI = strb.toString();
+		if(additionalHeaders !=null && !additionalHeaders.isEmpty()){
+			this.jsonObject = this.mc.get(this.appURI, additionalHeaders);
+		}else{
+			this.jsonObject = this.mc.get(this.appURI);
+		}
+		
+		isLoaded = true;
+		return this;
+	}
+	
 	public ResourceSet fetch(Map options) throws OslcException, IOException {
 		try {
 			this.buildURI();
@@ -433,12 +500,14 @@ public class ResourceSet {
 		if (properties.length > 0) {
 			strb.append(uri.contains("?") ? "" : "?").append(
 					"&oslc.properties=");
+			StringBuilder paramsStrb = new StringBuilder();
 			for (String property : properties) {
-				strb.append(property).append(",");
+				paramsStrb.append(property).append(",");
 			}
-			if (strb.toString().endsWith(",")) {
-				strb = strb.deleteCharAt(strb.length() - 1);
+			if(paramsStrb.toString().endsWith(",")){
+				paramsStrb = paramsStrb.deleteCharAt(paramsStrb.length() - 1);
 			}
+			strb.append(Util.urlEncode(paramsStrb.toString()));
 		}
 		JsonObject jo = this.mc.get(strb.toString());
 		return new Resource(jo, this.mc);
@@ -490,7 +559,26 @@ public class ResourceSet {
 			}
 		}
 		JsonObject rjo = this.mc.create(this.osURI, jo, properties);
-		System.out.println("Test for update with properties" + rjo.toString());
+		// use the maximo connector to connect to oslc server and then POST data
+		// to it
+		return new Resource(rjo, this.mc);
+		// use the maximo connector to connect to oslc server and then load data
+		// from it
+	}
+	
+	public Resource create(JsonObject jo, Map<String, Object> headers, String... properties)
+			throws IOException, OslcException {
+		if (this.osURI == null) {
+
+			try {
+				this.buildURI();
+			} catch (OslcException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		JsonObject rjo = this.mc.create(this.osURI, jo, headers, properties);
+		Util.jsonPrettyPrinter(rjo);
 		// use the maximo connector to connect to oslc server and then POST data
 		// to it
 		return new Resource(rjo, this.mc);

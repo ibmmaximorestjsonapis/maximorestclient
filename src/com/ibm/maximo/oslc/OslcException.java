@@ -37,7 +37,7 @@ public class OslcException extends Exception {
 
 	public OslcException(JsonObject jo) {
 		super(jo.containsKey("Error") ? jo.getJsonObject("Error").getString(
-				"message") : jo.getJsonObject("oslc:Error").getString(
-				"oslc:message"));
+				"message") : (jo.containsKey("oslc:Error")?jo.getJsonObject("oslc:Error").getString(
+				"oslc:message"):""));
 	}
 }

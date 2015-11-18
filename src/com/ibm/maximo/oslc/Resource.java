@@ -11,6 +11,8 @@
 package com.ibm.maximo.oslc;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
 
 import javax.json.*;
 
@@ -84,7 +86,7 @@ import javax.json.*;
  * AttachmentSet ats = re.attachmentSet(doclinkAttrName, relName);
  * Resource relationRe = re.relatedResource(attrName);
  * re.invokeAction(actionName,jsonObeject);
- * </code><pre>
+ * </code></pre>
  *
  */
 
@@ -113,7 +115,7 @@ public class Resource {
 		this.jsonObject = jo;
 		if(jo.containsKey("rdf:about")){
 			this.href = jo.getString("rdf:about");
-		}else if(jo.containsKey("rdf:resoure")){
+		}else if(jo.containsKey("rdf:resource")){
 			this.href = jo.getString("rdf:resource");
 		}else{
 			this.href = jo.getString("href");
@@ -183,8 +185,23 @@ public class Resource {
 	 * @throws OslcException
 	 */ 
 	
-	public Resource load(String... properties) throws OslcException,
-			IOException {
+	public Resource load() throws OslcException,IOException {
+		return this.loadWithAdditionalParamsAndHeaders(null, null);
+	}
+	
+	public Resource load(String... properties) throws OslcException,IOException {
+		return this.loadWithAdditionalParamsAndHeaders(null, null, properties);
+	}
+	
+	public Resource loadWithAdditionalParams(Map<String, Object> params,  String... properties)throws OslcException, IOException {
+		return this.loadWithAdditionalParamsAndHeaders(params, null, properties);
+	}
+	
+	public Resource loadWithAdditionalHeaders(Map<String, Object> headers,  String... properties)throws OslcException, IOException {
+		return this.loadWithAdditionalParamsAndHeaders(null, headers, properties);
+	}
+	
+	public Resource loadWithAdditionalParamsAndHeaders(Map<String, Object> params, Map<String, Object> headers, String... properties)throws OslcException, IOException {
 		if (isLoaded) {
 			throw new OslcException(
 					"The resource has been loaded, please call reload for refreshing");
@@ -195,15 +212,38 @@ public class Resource {
 		StringBuilder strb = new StringBuilder();
 		strb.append(this.href);
 		if (properties.length > 0) {
-			strb.append("?&oslc.properties=");
+			strb.append(this.href.contains("?") ? "" : "?").append("&oslc.properties=");
+			StringBuilder paramsStrb = new StringBuilder();
 			for (String property : properties) {
-				strb.append(property).append(",");
+				paramsStrb.append(property).append(",");
 			}
-			if (strb.toString().endsWith(",")) {
-				strb.deleteCharAt(strb.toString().length() - 1);
+			if(paramsStrb.toString().endsWith(",")){
+				paramsStrb = paramsStrb.deleteCharAt(paramsStrb.length() - 1);
+			}
+			strb.append(Util.urlEncode(paramsStrb.toString()));
+		}
+		if(params != null && !params.isEmpty()){
+			strb.append(this.href.contains("?") ? "" : "?");
+			Set<Map.Entry<String, Object>> entrySet = params.entrySet();
+			for(Map.Entry<String, Object> entry: entrySet){
+				StringBuilder singleParam = new StringBuilder();
+				singleParam.append("&").append(entry.getKey()).append("=");
+				singleParam.append(Util.urlEncode(entry.getValue().toString()));
+				strb.append(singleParam.toString());
 			}
 		}
-		this.jsonObject = this.mc.get(strb.toString());
+		if(headers!=null && !headers.isEmpty()){
+			this.jsonObject = this.mc.get(strb.toString(),headers);
+		}else{
+			this.jsonObject = this.mc.get(strb.toString());
+		}
+		this.isLoaded = true;
+		return this;
+	}
+	
+	public Resource reload() throws OslcException, IOException{
+		this.isLoaded = false;
+		load();
 		return this;
 	}
 	
@@ -223,13 +263,20 @@ public class Resource {
 	
 	public Resource update(JsonObject jo,String... properties) throws OslcException, IOException
 	{
+		return this.update(jo,null, properties);
+	}
+	
+	public Resource update(JsonObject jo, Map<String, Object> headers, String... properties) throws OslcException, IOException
+	{
 		if(this.href.isEmpty()){
 			throw new OslcException("The_resource_is_invalid");
 		}
-		this.jsonObject = this.mc.update(this.href,jo, properties);
-		if(properties.length>0){
-			System.out.println("Test for update with properties: "+this.jsonObject.toString());
+		if(headers != null && !headers.isEmpty()){
+			this.jsonObject = this.mc.update(this.href,jo, headers, properties);
+		}else{
+			this.jsonObject = this.mc.update(this.href,jo, properties);
 		}
+		this.isLoaded = true;
 		return this;
 	}
 	
@@ -239,8 +286,24 @@ public class Resource {
 			throw new OslcException("The_resource_is_invalid");
 		}
 		this.jsonObject = this.mc.merge(this.href,jo, properties);
+		this.isLoaded = true;
 		return this;
 	}
+	
+	public Resource merge(JsonObject jo, Map<String, Object> headers, String... properties) throws OslcException, IOException
+	{
+		if(this.href.isEmpty()){
+			throw new OslcException("The_resource_is_invalid");
+		}
+		if(headers !=null && !headers.isEmpty()){
+			this.jsonObject = this.mc.merge(this.href,jo, headers, properties);
+		}else{
+			this.jsonObject = this.mc.merge(this.href,jo, properties);
+		}
+		this.isLoaded = true;
+		return this;
+	}
+	
 	
 	/**
 	 * Load the attachmentset for resource
@@ -257,7 +320,7 @@ public class Resource {
 			JsonObject obj = jsonObject.getJsonObject(doclinkAttrName);
 			str = obj.getString("href");
 		}else if(this.jsonObject.containsKey("spi:"+ doclinkAttrName)){
-			JsonObject obj = jsonObject.getJsonObject("spi" + doclinkAttrName);
+			JsonObject obj = jsonObject.getJsonObject("spi:" + doclinkAttrName);
 			if(obj.containsKey("rdf:about")){
 				str = obj.getString("rdf:about");
 			}else if(obj.containsKey("rdf:resource")){
@@ -280,7 +343,7 @@ public class Resource {
 			JsonObject obj = jsonObject.getJsonObject("doclinks");
 			str = obj.getString("href");
 		}else if(this.jsonObject.containsKey("spi:"+ "doclinks")){
-			JsonObject obj = jsonObject.getJsonObject("spi" + "doclinks");
+			JsonObject obj = jsonObject.getJsonObject("spi:" + "doclinks");
 			if(obj.containsKey("rdf:about")){
 				str = obj.getString("rdf:about");
 			}else if(obj.containsKey("rdf:resource")){
@@ -300,8 +363,8 @@ public class Resource {
 		JsonObject jo = null;
 		if(this.jsonObject.containsKey(attrName)){
 			jo = this.jsonObject.getJsonObject(attrName);
-		}else if(this.jsonObject.containsKey("spi" + attrName)){
-			jo = this.jsonObject.getJsonObject("spi" + attrName);			
+		}else if(this.jsonObject.containsKey("spi:" + attrName)){
+			jo = this.jsonObject.getJsonObject("spi:" + attrName);			
 		}else{
 			return null;
 		}

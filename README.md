@@ -1,3 +1,9 @@
+# Maximo Rest Client 1.0 Released!
+
+1. Add support to arbitrary parameters for Resource/ResourceSet
+2. Add support to arbitrary headers for get/post/patch/merge/delete
+3. Add new examples about new API in TestOSLCAPI.java.
+4. fix bugs
 
 # I. Introduction
 -----
@@ -26,6 +32,16 @@ Maximo Rest Client is available in Maven Central repository as an open source ar
 1. Create a new Maven project
 2. Add following dependency to your pom.xml file
 
+Latest Release 
+```xml
+<dependency>
+    <groupId>com.ibm.maximo</groupId>
+    <artifactId>maximo-restclient</artifactId>
+    <version>1.0</version>
+</dependency>
+```
+
+Last Release
 ```xml
 <dependency>
     <groupId>com.ibm.maximo</groupId>

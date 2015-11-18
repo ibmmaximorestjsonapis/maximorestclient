@@ -11,8 +11,12 @@
 package com.ibm.maximo.oslc;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
@@ -46,99 +50,187 @@ public class TestOSLCApi{
 			InterruptedException, DatatypeConfigurationException {
 		// connection
 		Util.jsonPrettyPrinter("*******************connection******************");
-		MaximoConnector mc = new MaximoConnector(new Options().user("wilson")
-				.password("wilson").mt(false).lean(true).auth("maxauth")
+		MaximoConnector mc = new MaximoConnector(new Options().user("murthy")
+				.password("murthy").mt(false).lean(true).auth("maxauth")
 				.host("localhost").port(7001)).debug(true);
 		mc.connect();
 		// Example for SELECT
 		Util.jsonPrettyPrinter("*******************Example for SELECT******************");
-		ResourceSet set2 = mc.resourceSet("MXWODETAIL")
+		ResourceSet selectSet = mc.resourceSet("MXWODETAIL")
 				.select("spi:wonum", "spi:status", "spi:statusdate")
 				.pageSize(2000).fetch(null);
-		Util.jsonPrettyPrinter(set2.count());
-		// Example for for CREATE and DELETE *multi thread
+		Util.jsonPrettyPrinter(selectSet.count());
+		
+		
+		// Example for SELECT with Additional Params *NEW
+		Util.jsonPrettyPrinter("*******************Example for SELECT with Params******************");
+		Map<String, Object> paramsMap = new HashMap<String, Object>();
+		paramsMap.put("oslc.pageSize",50);
+		paramsMap.put("oslc.where", "spi:assetnum=\"1001\"");
+		paramsMap.put("oslc.select", "spi:assetnum");
+		ResourceSet selectWithParamsSet = mc.resourceSet("MXASSET").fetchWithAddtionalParams(paramsMap);
+		Util.jsonPrettyPrinter(selectWithParamsSet.toJSON());
+		
+		// Example for for CREATE and DELETE 
 		Util.jsonPrettyPrinter("*******************Example for for CREATE and DELETE******************");
-		Util.jsonPrettyPrinter(set2.totalCount());
-		JsonObject jo = Json.createObjectBuilder()
-				.add("siteid", "BEDFORD").add("description", "test")
-				.build();
+		Util.jsonPrettyPrinter(selectSet.totalCount());
+		
+		JsonObject jo = null;
+		if(mc.isLean()){
+			jo = Json.createObjectBuilder()
+					.add("siteid", "BEDFORD").add("description", "test")
+					.build();
+		}else{
+			jo = Json.createObjectBuilder()
+					.add("spi:siteid", "BEDFORD").add("spi:description", "test")
+					.build();
+		}
+		
 
 		JsonObject jo2 = Json.createObjectBuilder()
-				.add("spi:escription", "test2").build();
+				.add("spi:description", "test2").build();
 
-		Resource res3 = set2.create(jo, "wonum", "status",
+		Resource createRes = selectSet.create(jo, "wonum", "status",
 				"statusdate", "description");
-		String link = res3.getURI();
-		Resource res4 = mc.resource(link);
-		res3.load("wonum", "status", "statusdate", "description");
-		res4.load("wonum", "status", "statusdate", "description");
-		res3.update(jo2);
+		String link = createRes.getURI();
+		Resource createRes2 = mc.resource(link);
+		createRes.load("wonum", "status", "statusdate", "description");
+		Map<String, Object> getParamsMap = new HashMap<String, Object>();
+		getParamsMap.put("oslc.properties", "wonum,status,statusdate,description");
+		createRes2.loadWithAdditionalParams(getParamsMap);
+		createRes.update(jo2);
+		
+		
+		// Example for for CREATE with Additional Headers *NEW
+		Util.jsonPrettyPrinter("*******************Example for for CREATE with Additional Headers******************");
+		Util.jsonPrettyPrinter(selectSet.totalCount());
+		JsonObject addJo = null;
+		if(mc.isLean()){
+			addJo = Json.createObjectBuilder()
+					.add("siteid", "BEDFORD").add("description", "test")
+					.build();
+		}else{
+			addJo = Json.createObjectBuilder()
+					.add("spi:siteid", "BEDFORD").add("spi:description", "test")
+					.build();
+		}
+		
+		Map<String, Object> headers = new HashMap<String, Object>();
+		headers.put("Properties", "wonum");
+		Resource createRes3 = selectSet.create(addJo, headers);
+		Util.jsonPrettyPrinter(createRes3.toJSON());
+		
 
 		//Example for delete
-		res4.delete();
-		Util.jsonPrettyPrinter(set2.totalCount());
+		createRes2.delete();
+		Util.jsonPrettyPrinter(selectSet.totalCount());
 		
-		//Example for update(patch/merge);
-		ResourceSet reSet = mc.resourceSet("MXPO").fetch();
-		Resource poRes  = reSet.member(0);
-		JsonObject polineObjIn = Json.createObjectBuilder().add("polinenum",1).add("itemnum", "560-00")
-				.add("storeloc", "CENTRAL").build();
-		JsonArray polineArr = Json.createArrayBuilder().add(polineObjIn).build();
-		JsonObject polineObj = Json.createObjectBuilder().add("poline", polineArr).build();
+		//Example for update(patch/merge) *UPDATED 
+		ResourceSet reSet = mc.resourceSet("MXPO").where(new QueryWhere().and("spi:status").in("WAPPR")).fetch();
+		ResourceSet reSetWithoutWhere = mc.resourceSet("MXPO").fetch();
+		Resource poRes = null;
+		//Patch
+		if(reSet.count() > 0){
+			poRes = reSet.member(0);
+			if(mc.isLean()){
+				JsonObject polineObjIn = Json.createObjectBuilder().add("polinenum",1).add("itemnum", "560-00")
+						.add("storeloc", "CENTRAL").build();
+				JsonArray polineArr = Json.createArrayBuilder().add(polineObjIn).build();
+				JsonObject polineObj = Json.createObjectBuilder().add("poline", polineArr).build();
 		
-		//patch
-		poRes.update(polineObj);
-		Util.jsonPrettyPrinter(poRes.toJSON().get("poline"));
-		
-		JsonObject polineObjIn2 = Json.createObjectBuilder().add("polinenum",2).add("itemnum", "0-0031")
-				.add("storeloc", "CENTRAL").build();
-		JsonArray polineArr2 = Json.createArrayBuilder().add(polineObjIn2).build();
-		JsonObject polineObj2 = Json.createObjectBuilder().add("poline", polineArr2).build();
-		poRes.update(polineObj2);
-		Util.jsonPrettyPrinter(poRes.toJSON().get("poline"));
-		
+				poRes.update(polineObj,"poline");
+				Util.jsonPrettyPrinter(poRes.toJSON());
+				Util.jsonPrettyPrinter(poRes.toJSON().get("poline"));
+			}else{
+				JsonObject polineObjIn = Json.createObjectBuilder().add("spi:polinenum",1).add("spi:itemnum", "560-00")
+						.add("spi:storeloc", "CENTRAL").build();
+				JsonArray polineArr = Json.createArrayBuilder().add(polineObjIn).build();
+				JsonObject polineObj = Json.createObjectBuilder().add("spi:poline", polineArr).build();
+				
+				poRes.update(polineObj,"spi:poline");
+				Util.jsonPrettyPrinter(poRes.toJSON());
+				Util.jsonPrettyPrinter(poRes.toJSON().get("spi:poline"));
+			}
+			
+			
+			if(mc.isLean()){
+				JsonObject polineObjIn = Json.createObjectBuilder().add("polinenum",1).add("itemnum", "0-0031")
+						.add("storeloc", "CENTRAL").build();
+				JsonArray polineArr = Json.createArrayBuilder().add(polineObjIn).build();
+				JsonObject polineObj = Json.createObjectBuilder().add("poline", polineArr).build();
+				
+				poRes.update(polineObj).reload();
+				Util.jsonPrettyPrinter(poRes.toJSON());
+				Util.jsonPrettyPrinter(poRes.toJSON().get("poline"));
+			}else{
+				JsonObject polineObjIn = Json.createObjectBuilder().add("spi:polinenum",1).add("spi:itemnum", "0-0031")
+						.add("spi:storeloc", "CENTRAL").build();
+				JsonArray polineArr = Json.createArrayBuilder().add(polineObjIn).build();
+				JsonObject polineObj = Json.createObjectBuilder().add("spi:poline", polineArr).build();
+				
+				poRes.update(polineObj,"spi:poline");
+				Util.jsonPrettyPrinter(poRes.toJSON());
+				Util.jsonPrettyPrinter(poRes.toJSON().get("spi:poline"));
+			}
+			
+		}else{
+			poRes = reSetWithoutWhere.member(0);
+		}
+
 		//Merge
-		JsonObject polineObjIn3 = Json.createObjectBuilder().add("polinenum",1).add("itemnum", "0-0031")
-				.add("storeloc", "CENTRAL").build();
-		JsonArray polineArr3 = Json.createArrayBuilder().add(polineObjIn3).build();
-		JsonObject polineObj3 = Json.createObjectBuilder().add("poline", polineArr3).build();
-		poRes.merge(polineObj3);
-		Util.jsonPrettyPrinter(poRes.toJSON().get("poline"));
+		if(mc.isLean()){
+			JsonObject polineObjIn = Json.createObjectBuilder().add("polinenum",1).add("itemnum", "560-00")
+					.add("storeloc", "CENTRAL").build();
+			JsonArray polineArr = Json.createArrayBuilder().add(polineObjIn).build();
+			JsonObject polineObj = Json.createObjectBuilder().add("poline", polineArr).build();
+			
+			poRes.merge(polineObj,"poline");
+			Util.jsonPrettyPrinter(poRes.toJSON());
+			Util.jsonPrettyPrinter(poRes.toJSON().get("poline"));
+		}else{
+			JsonObject polineObjIn = Json.createObjectBuilder().add("spi:polinenum",1).add("spi:itemnum", "560-00")
+					.add("spi:storeloc", "CENTRAL").build();
+			JsonArray polineArr = Json.createArrayBuilder().add(polineObjIn).build();
+			JsonObject polineObj = Json.createObjectBuilder().add("spi:poline", polineArr).build();
+
+			poRes.merge(polineObj,"spi:poline");
+			Util.jsonPrettyPrinter(poRes.toJSON());
+			Util.jsonPrettyPrinter(poRes.toJSON().get("spi:poline"));
+		}
 		
 			
 		// Example for WHERE
-		ResourceSet set3 = mc
+		ResourceSet whereSet = mc
 				.resourceSet("MXWODETAIL")
 				.where((new QueryWhere()).and("spi:status").in("APPR")
-						.and("spi:statusdate").lt("2000-07-07T09:50:00-04:00"))
-						//.and("spi:assetnum").equalTo("11450"))
+				.and("spi:statusdate").lt("2000-07-07T09:50:00-04:00"))
 				.select("spi:wonum", "spi:status", "spi:assetnum")
 				.fetch(null);
 		Util.jsonPrettyPrinter("*******************Example for WHERE******************");
-		Util.jsonPrettyPrinter(set3.toJSON());
-		Util.jsonPrettyPrinter(set3.count());
+		Util.jsonPrettyPrinter(whereSet.toJSON());
+		Util.jsonPrettyPrinter(whereSet.count());
 		
 		// Example for Action
-		set3.where(new QueryWhere().and("spi:status").in("WAPPR")).fetch(null);
-		Util.jsonPrettyPrinter(set3.count());		
-		Resource re = set3.member(0);
-		Util.jsonPrettyPrinter(re.toJSON());
-		JsonObject joAction = Json.createObjectBuilder()
-				.add("status", "APPR").build();
-		re.invokeAction("wsmethod:changeStatus", joAction);
-		Util.jsonPrettyPrinter(re.toJSON());
-		
+		whereSet.where(new QueryWhere().and("spi:status").in("WAPPR")).fetch(null);
+		Util.jsonPrettyPrinter(whereSet.count());		
+		if(whereSet.count() > 0){
+			Resource re = whereSet.member(0);
+			Util.jsonPrettyPrinter(re.toJSON());
+			JsonObject joAction = Json.createObjectBuilder().add("status", "APPR").build();
+			re.invokeAction("wsmethod:changeStatus", joAction);
+			Util.jsonPrettyPrinter(re.toJSON());
+		}
 		
 		// Example for NEXTPAGE/PREVIOUSPAGE
-		ResourceSet set = mc.resourceSet("MXSR")
+		ResourceSet nextPageSet = mc.resourceSet("MXSR")
 				.select("spi:description", "spi:ticketid").pageSize(5)
 				.fetch(null);
 		Util.jsonPrettyPrinter("*******************Example for NEXTPAGE/PREVIOUSPAGE******************");
-		Util.jsonPrettyPrinter(new String(set.toJSONBytes()));
-		Util.jsonPrettyPrinter(set.count());
-		Util.jsonPrettyPrinter(set.nextPage().toJSON());
-		Util.jsonPrettyPrinter(set.previousPage().toJSON());
-		Util.jsonPrettyPrinter(set3.count());
+		Util.jsonPrettyPrinter(new String(nextPageSet.toJSONBytes()));
+		Util.jsonPrettyPrinter(nextPageSet.count());
+		Util.jsonPrettyPrinter(nextPageSet.nextPage().toJSON());
+		Util.jsonPrettyPrinter(nextPageSet.previousPage().toJSON());
+		Util.jsonPrettyPrinter(whereSet.count());
 		
 		
 		//Example for StablePaging
@@ -151,9 +243,25 @@ public class TestOSLCApi{
 		spSet.nextPage();
 		
 
+		// Example for WHERE
+		Util.jsonPrettyPrinter("*******************Example for Another WHERE******************");
+		ResourceSet anotherWhereSet = mc
+				.resourceSet("MXWODETAIL")
+				.where("status=\"APPR\"")
+				.select("wonum", "status", "statusdate", "$asset.description",
+						"assetnum.assettag").pageSize(5).fetch(null);
+		Util.jsonPrettyPrinter(anotherWhereSet.totalCount());
+
+		
+		// Example for Disconnect
+		Util.jsonPrettyPrinter("*******************Example for Disconnect******************");
+		mc.disconnect();
+		mc.connect();
+		
 		// Example for ATTACHMENT/ATTACHMENTSET
+		// *need DOCLINKS
 		Util.jsonPrettyPrinter("*******************Example for ATTACHMENT/ATTACHMENTSET******************");
-		Resource res = set2.member(0).load();
+		Resource res = selectSet.member(0).load();
 		AttachmentSet ats = res.attachmentSet();
 		
 		String str = "hello world @ "
@@ -212,24 +320,7 @@ public class TestOSLCApi{
 			Util.jsonPrettyPrinter(new String(att4.load().toDoc(), "utf-8"));
 			Util.jsonPrettyPrinter(att2.loadMeta().toDocMeta());
 		}
-
-		// Example for WHERE
-		Util.jsonPrettyPrinter("*******************Example for Another WHERE******************");
-		ResourceSet set4 = mc
-				.resourceSet("MXWODETAIL")
-				.where("status=\"APPR\"")
-				.select("wonum", "status", "statusdate", "$asset.description",
-						"assetnum.assettag").pageSize(5).fetch(null);
-		Util.jsonPrettyPrinter(set4.totalCount());
-
-
-
-		// Example for Disconnect
-		Util.jsonPrettyPrinter("*******************Example for Disconnect******************");
-		mc.disconnect();
-		mc.connect();
 		
-		// *need DOCLINKS
 		//Delete by Attachment
 		att.delete();
 		
@@ -252,6 +343,6 @@ public class TestOSLCApi{
 				.select("spi:description", "spi:ticketid").pageSize(5)
 				.fetch(null);
 		Util.jsonPrettyPrinter(set6.toJSON());
-		
+	
 	}
 }

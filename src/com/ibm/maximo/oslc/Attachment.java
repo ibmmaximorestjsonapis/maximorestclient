@@ -12,6 +12,7 @@ package com.ibm.maximo.oslc;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Map;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -242,13 +243,30 @@ public class Attachment {
 	 * @throws IOException 
 	 */
 	public Attachment load() throws IOException, OslcException {
+		this.load(null);
+		return this;
+	}
+	
+	/**
+	 * load attachment data with headers
+	 * @param headers
+	 * @throws IOException
+	 * @throws OslcException
+	 */
+	
+	public Attachment load(Map<String, Object> headers) throws IOException, OslcException {
 		if(isLoaded){
 			throw new OslcException("The attachment has been loaded, please call reload for refreshing");
 		}
-		this.data = this.mc.getAttachmentData(this.uri);
+		if(headers!=null && !headers.isEmpty()){
+			this.data = this.mc.getAttachmentData(this.uri,headers);
+		}else{
+			this.data = this.mc.getAttachmentData(this.uri);
+		}
 		isLoaded = true;
 		return this;
 	}
+	
 	
 	public Attachment reload() throws IOException, OslcException {
 		isLoaded = false;
@@ -263,6 +281,11 @@ public class Attachment {
 	 * @throws OslcException
 	 */
 	public Attachment loadMeta() throws IOException, OslcException{
+		this.loadMeta(null);
+		return this;
+	}
+	
+	public Attachment loadMeta(Map<String, Object> headers) throws IOException, OslcException{
 		if(isMetaLoaded){
 			throw new OslcException("The attachment has been loaded, please call reloadMeta for refreshing");
 		}
@@ -282,8 +305,11 @@ public class Attachment {
 		if(metauri.toString().endsWith("/")){
 			metauri.deleteCharAt(metauri.length()-1);
 		}
-		
-		jo = this.mc.get(metauri.toString());
+		if(headers!=null && !headers.isEmpty()){
+			jo = this.mc.get(metauri.toString(),headers);
+		}else{
+			jo = this.mc.get(metauri.toString());
+		}
 		
 		if(jo.containsKey("rdf:about")){
 			this.name = jo.getString("dcterms:title");

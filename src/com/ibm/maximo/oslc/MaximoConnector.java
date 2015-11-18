@@ -14,6 +14,8 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -213,6 +215,10 @@ public class MaximoConnector {
 	boolean isValid(){
 		return this.valid;
 	}
+	
+	boolean isLean(){
+		return this.options.isLean();
+	}
 
 	/**
 	 * Connect to Maximo Server
@@ -242,8 +248,8 @@ public class MaximoConnector {
 			cookies = con.getHeaderFields().get("Set-Cookie");
 			JsonObject oslcHome = this.get(this.options.getAppURI());
 			if(oslcHome!=null){
-				// this.version(oslcHome);
-				// this.userInfo(oslcHome);
+//				this.version(oslcHome);
+//				this.userInfo(oslcHome);
 			}
 		}
 		if (cookies == null) {
@@ -258,6 +264,10 @@ public class MaximoConnector {
 	}
 	
 	public synchronized JsonObject get(String uri) throws IOException, OslcException {
+		return this.get(uri, null);
+	}
+	
+	public synchronized JsonObject get(String uri, Map<String,Object> headers) throws IOException, OslcException {
 		if(!isValid()){
 			throw new OslcException("The instance of MaximoConnector is not valid.");
 		}
@@ -278,6 +288,9 @@ public class MaximoConnector {
 		HttpURLConnection con = (HttpURLConnection) httpURL
 				.openConnection();
 		con = this.setMethod(con, "GET");
+		if (headers!=null && !headers.isEmpty() ) {
+			con = this.setHeaders(con, headers);
+		}
 		if (cookies == null)
 			this.connect();
 		this.setCookiesForSession(con);
@@ -305,6 +318,10 @@ public class MaximoConnector {
 	 */
 
 	public synchronized byte[] getAttachmentData(String uri) throws IOException, OslcException {
+		return this.getAttachmentData(uri, null);
+	}
+	
+	public synchronized byte[] getAttachmentData(String uri, Map<String,Object> headers) throws IOException, OslcException {
 		if(!isValid()){
 			throw new OslcException("The instance of MaximoConnector is not valid.");
 		}
@@ -326,6 +343,9 @@ public class MaximoConnector {
 		HttpURLConnection con = (HttpURLConnection) httpURL
 								.openConnection();
 		con = this.setMethod(con, "GET");
+		if (headers!=null && !headers.isEmpty() ) {
+			con = this.setHeaders(con, headers);
+		}
 		if (cookies == null)
 			this.connect();
 		this.setCookiesForSession(con);
@@ -362,6 +382,11 @@ public class MaximoConnector {
 
 	public JsonObject create(String uri,JsonObject jo, String... properties)
 			throws IOException, OslcException {
+		return this.create(uri, jo, null, properties);
+	}
+	
+	public JsonObject create(String uri,JsonObject jo, Map<String,Object> headers, String... properties)
+			throws IOException, OslcException {
 		if(!isValid()){
 			throw new OslcException("The instance of MaximoConnector is not valid.");
 		}
@@ -382,19 +407,18 @@ public class MaximoConnector {
 		HttpURLConnection con = (HttpURLConnection) httpURL
 				.openConnection();
 		con = this.setMethod(con, "POST", properties);
+		if (headers!=null && !headers.isEmpty() ) {
+			con = this.setHeaders(con, headers);
+		}
 		if (cookies == null)
 			this.connect();
 		this.setCookiesForSession(con);
 		OutputStreamWriter writer = new OutputStreamWriter(
 				con.getOutputStream());
-//		if (jo.isEmpty()) {
-//			throw new OslcException("jo_is_invalid");
-//		}
 		writer.write(jo.toString());
 		writer.flush();
 		writer.close();
 		int resCode = con.getResponseCode();
-		// String resLine = con.getResponseMessage();
 		InputStream inStream;
 		if (resCode >= 400) {
 			inStream = con.getErrorStream();
@@ -422,6 +446,11 @@ public class MaximoConnector {
 	
 	public JsonObject createAttachment(String uri,byte[] data, String name,
 			String description, String meta) throws IOException, OslcException {
+		return this.createAttachment(uri, data, name, description, meta, null);
+	}
+	
+	public JsonObject createAttachment(String uri,byte[] data, String name,
+			String description, String meta, Map<String, Object> headers) throws IOException, OslcException {
 		if(!isValid()){
 			throw new OslcException("The instance of MaximoConnector is not valid.");
 		}
@@ -445,6 +474,9 @@ public class MaximoConnector {
 		con.setRequestProperty("slug", name);
 		con.setRequestProperty("x-document-description", description);
 		con.setRequestProperty("x-document-meta", meta);
+		if (headers!=null && !headers.isEmpty() ) {
+			con = this.setHeaders(con, headers);
+		}
 		if (cookies == null)
 			this.connect();
 		this.setCookiesForSession(con);
@@ -482,6 +514,11 @@ public class MaximoConnector {
 
 	public synchronized JsonObject update(String uri, JsonObject jo, String... properties)
 			throws IOException, OslcException {
+		return this.update(uri, jo, null, properties);
+	}
+	
+	public synchronized JsonObject update(String uri, JsonObject jo, Map<String,Object> headers, String... properties)
+			throws IOException, OslcException {
 		if(!isValid()){
 			throw new OslcException("The instance of MaximoConnector is not valid.");
 		}
@@ -502,6 +539,9 @@ public class MaximoConnector {
 		HttpURLConnection con = (HttpURLConnection) httpURL
 				.openConnection();
 		con = this.setMethod(con, "PATCH",properties);
+		if (headers!=null && !headers.isEmpty() ) {
+			con = this.setHeaders(con, headers);
+		}
 		if (cookies == null)
 			this.connect();
 		this.setCookiesForSession(con);
@@ -519,8 +559,7 @@ public class MaximoConnector {
 			inStream = con.getErrorStream();
 			JsonReader rdr = Json.createReader(inStream);
 			JsonObject obj = rdr.readObject();
-			obj = (JsonObject) obj.get("Error");
-			throw new OslcException(resCode, obj.get("message").toString());
+			throw new OslcException(obj);
 		}
 		if(resCode == 204){
 			return null;
@@ -532,6 +571,11 @@ public class MaximoConnector {
 	}
 
 	public synchronized JsonObject merge(String uri, JsonObject jo, String... properties)
+			throws IOException, OslcException {
+		return this.merge(uri, jo, null, properties);
+	}
+	
+	public synchronized JsonObject merge(String uri, JsonObject jo, Map<String,Object> headers, String... properties)
 			throws IOException, OslcException {
 		if(!isValid()){
 			throw new OslcException("The instance of MaximoConnector is not valid.");
@@ -553,6 +597,9 @@ public class MaximoConnector {
 		HttpURLConnection con = (HttpURLConnection) httpURL
 				.openConnection();
 		con = this.setMethod(con, "MERGE",properties);
+		if (headers!=null && !headers.isEmpty() ) {
+			con = this.setHeaders(con, headers);
+		}
 		if (cookies == null)
 			this.connect();
 		this.setCookiesForSession(con);
@@ -589,6 +636,10 @@ public class MaximoConnector {
 	 */
 	
 	public void delete(String uri) throws IOException, OslcException {
+		this.delete(uri, null);
+	}
+	
+	public void delete(String uri, Map<String, Object> headers) throws IOException, OslcException {
 		if(!isValid()){
 			throw new OslcException("The instance of MaximoConnector is not valid.");
 		}
@@ -609,6 +660,9 @@ public class MaximoConnector {
 		HttpURLConnection con = (HttpURLConnection) httpURL
 				.openConnection();
 		con = this.setMethod(con, "DELETE");
+		if (headers!=null && !headers.isEmpty() ) {
+			con = this.setHeaders(con, headers);
+		}
 		if (cookies == null)
 			this.connect();
 		this.setCookiesForSession(con);
@@ -691,6 +745,15 @@ public class MaximoConnector {
 		}
 		return null;
 	}
+	
+	protected HttpURLConnection setHeaders(HttpURLConnection con, Map<String, Object> headers)
+			throws IOException, OslcException {
+		Set<Map.Entry<String, Object>> set = headers.entrySet();
+		for (Map.Entry<String, Object> entry : set) {
+			con.setRequestProperty(entry.getKey(), entry.getValue().toString());
+		}		
+		return con;
+}
 
 	protected HttpURLConnection setMethod(HttpURLConnection con, String method, String... properties)
 			throws IOException, OslcException {
@@ -740,59 +803,58 @@ public class MaximoConnector {
 		}
 	}
 	
-	/*
-	private MaximoConnector version(JsonObject oslcHome) throws IOException, OslcException{
-		JsonObject versionObj = null;
-		String versionUri = null;
-		if(oslcHome.containsKey("spi:version")){
-			versionObj = oslcHome.getJsonObject("spi:version");
-			if(versionObj.containsKey("rdf:resource")){
-				versionUri = versionObj.getString("rdf:resource");
-			}else if(versionObj.containsKey("href")){
-				versionUri = versionObj.getString("href");
-			}
-		}else if(oslcHome.containsKey("version")){
-			versionObj = oslcHome.getJsonObject("version");
-			if(versionObj.containsKey("href")){
-				versionUri = versionObj.getString("href");
-			}
-		}
-		if(versionUri!=null){
-			this.version = this.get(versionUri);
-		}
-		return this;
-	}
 	
-	private MaximoConnector userInfo(JsonObject oslcHome) throws IOException, OslcException{
-		JsonObject userInfoObj = null;
-		String userInfoUri = null;
-		if(oslcHome.containsKey("spi:whoami")){
-			userInfoObj = oslcHome.getJsonObject("spi:whoami");
-			if(userInfoObj.containsKey("rdf:resource")){
-				userInfoUri = userInfoObj.getString("rdf:resource");
-			}else if(userInfoObj.containsKey("href")){
-				userInfoUri = userInfoObj.getString("href");
-			}
-		}else if(oslcHome.containsKey("whoami")){
-			userInfoObj = oslcHome.getJsonObject("whoami");
-			if(userInfoObj.containsKey("href")){
-				userInfoUri = userInfoObj.getString("href");
-			}
-		}
-		if(userInfoUri != null){
-			this.userInfo = this.get(userInfoUri);
-		}
-		return this;
-	}
-	
-	public JsonObject getVersion(){
-		return this.version;
-	}
-	
-	public JsonObject getUserInfo(){
-		return this.userInfo;
-	}
-	*/
+//	private MaximoConnector version(JsonObject oslcHome) throws IOException, OslcException{
+//		JsonObject versionObj = null;
+//		String versionUri = null;
+//		if(oslcHome.containsKey("spi:version")){
+//			versionObj = oslcHome.getJsonObject("spi:version");
+//			if(versionObj.containsKey("rdf:resource")){
+//				versionUri = versionObj.getString("rdf:resource");
+//			}else if(versionObj.containsKey("href")){
+//				versionUri = versionObj.getString("href");
+//			}
+//		}else if(oslcHome.containsKey("version")){
+//			versionObj = oslcHome.getJsonObject("version");
+//			if(versionObj.containsKey("href")){
+//				versionUri = versionObj.getString("href");
+//			}
+//		}
+//		if(versionUri!=null){
+//			this.version = this.get(versionUri);
+//		}
+//		return this;
+//	}
+//	
+//	private MaximoConnector userInfo(JsonObject oslcHome) throws IOException, OslcException{
+//		JsonObject userInfoObj = null;
+//		String userInfoUri = null;
+//		if(oslcHome.containsKey("spi:whoami")){
+//			userInfoObj = oslcHome.getJsonObject("spi:whoami");
+//			if(userInfoObj.containsKey("rdf:resource")){
+//				userInfoUri = userInfoObj.getString("rdf:resource");
+//			}else if(userInfoObj.containsKey("href")){
+//				userInfoUri = userInfoObj.getString("href");
+//			}
+//		}else if(oslcHome.containsKey("whoami")){
+//			userInfoObj = oslcHome.getJsonObject("whoami");
+//			if(userInfoObj.containsKey("href")){
+//				userInfoUri = userInfoObj.getString("href");
+//			}
+//		}
+//		if(userInfoUri != null){
+//			this.userInfo = this.get(userInfoUri);
+//		}
+//		return this;
+//	}
+//	
+//	public JsonObject getVersion(){
+//		return this.version;
+//	}
+//	
+//	public JsonObject getUserInfo(){
+//		return this.userInfo;
+//	}
 	
 	/**
 	 * Disconnect with Maximo Server
