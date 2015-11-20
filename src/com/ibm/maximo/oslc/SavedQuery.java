@@ -52,7 +52,8 @@ public class SavedQuery {
 			try {
 				strBuilder.append("&").append("sqp:");
 				strBuilder.append(entry.getKey());
-				strBuilder.append("=").append(Util.stringValue(entry.getValue()));
+				String encodeValue = Util.urlEncode(Util.stringValue(entry.getValue()));
+				strBuilder.append("=").append(encodeValue);
 			} catch (UnsupportedEncodingException e){
 				
 			}catch(DatatypeConfigurationException e) {
