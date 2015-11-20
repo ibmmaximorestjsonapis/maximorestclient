@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -128,6 +130,7 @@ public class ResourceSet {
 	private String osURI;
 	private String publicURI;
 	private String appURI;
+	private List<String> orderBy = new ArrayList<String>();
 	private String savedQuery = null;
 	private StringBuffer strbWhere;
 	private StringBuffer searchTerms;
@@ -136,6 +139,7 @@ public class ResourceSet {
 	private boolean paging = false;
 	private boolean stablePaging = false;
 	private boolean isLoaded = false;
+	private JsonArray jsonArray;
 
 	public ResourceSet(String osName) {
 		this.osName = osName;
@@ -239,6 +243,13 @@ public class ResourceSet {
 		this.stablePaging = type;
 		return this;
 	}
+	
+	public ResourceSet orderBy(String... orderByProperties){
+		for(String property: orderByProperties){
+			this.orderBy.add(property);
+		}
+		return this;
+	}
 
 	/**
 	 * Fetching the data for ResourceSet
@@ -314,7 +325,11 @@ public class ResourceSet {
 		}else{
 			this.jsonObject = this.mc.get(this.appURI);
 		}
-		
+		if (this.jsonObject.containsKey("rdfs:member")) {
+			this.jsonArray = (JsonArray) this.jsonObject.get("rdfs:member");
+		} else {
+			this.jsonArray = (JsonArray) this.jsonObject.get("member");
+		}
 		isLoaded = true;
 		return this;
 	}
@@ -327,6 +342,11 @@ public class ResourceSet {
 			e.printStackTrace();
 		}
 		this.jsonObject = this.mc.get(this.appURI);
+		if (this.jsonObject.containsKey("rdfs:member")) {
+			this.jsonArray = (JsonArray) this.jsonObject.get("rdfs:member");
+		} else {
+			this.jsonArray = (JsonArray) this.jsonObject.get("member");
+		}
 		isLoaded = true;
 		return this;
 	}
@@ -348,6 +368,11 @@ public class ResourceSet {
 					.getJsonObject("oslc:nextPage").getString("rdf:resource");
 		}
 		this.jsonObject = this.mc.get(this.appURI);
+		if (this.jsonObject.containsKey("rdfs:member")) {
+			this.jsonArray = (JsonArray) this.jsonObject.get("rdfs:member");
+		} else {
+			this.jsonArray = (JsonArray) this.jsonObject.get("member");
+		}
 		return this;
 	}
 
@@ -392,6 +417,11 @@ public class ResourceSet {
 			}
 		}
 		this.jsonObject = this.mc.get(this.appURI);
+		if (this.jsonObject.containsKey("rdfs:member")) {
+			this.jsonArray = (JsonArray) this.jsonObject.get("rdfs:member");
+		} else {
+			this.jsonArray = (JsonArray) this.jsonObject.get("member");
+		}
 		return this;
 	}
 
@@ -407,6 +437,11 @@ public class ResourceSet {
 			return this;
 		}
 		this.jsonObject = this.mc.get(this.appURI);
+		if (this.jsonObject.containsKey("rdfs:member")) {
+			this.jsonArray = (JsonArray) this.jsonObject.get("rdfs:member");
+		} else {
+			this.jsonArray = (JsonArray) this.jsonObject.get("member");
+		}
 		isLoaded = true;
 		return this;
 	}
@@ -487,6 +522,15 @@ public class ResourceSet {
 			if (this.savedQuery != null) {
 				strb.append("&savedQuery=" + this.savedQuery);
 			}
+			if (this.orderBy.size()>0){
+				strb.append("&oslc.orderBy=");
+				for(String property: this.orderBy){
+					strb.append("-" + property + ",");
+				}
+				if(strb.toString().endsWith(",")){
+					strb = strb.deleteCharAt(strb.length() - 1);
+				}
+			}
 			this.appURI = strb.toString();
 			return this;
 		} catch (Exception e) {
@@ -526,14 +570,10 @@ public class ResourceSet {
 		if (!isLoaded) {
 			load();
 		}
-		JsonArray ja = null;
-		if (this.jsonObject.containsKey("rdfs:member")) {
-			ja = (JsonArray) this.jsonObject.get("rdfs:member");
-		} else {
-			ja = (JsonArray) this.jsonObject.get("member");
+		if(index >= this.jsonArray.size()){
+			return null;
 		}
-		JsonObject jo = (JsonObject) ja.get(index);
-		System.out.println(jo);
+		JsonObject jo = (JsonObject) this.jsonArray.get(index);
 		return new Resource(jo, this.mc);
 	}
 
@@ -559,6 +599,7 @@ public class ResourceSet {
 			}
 		}
 		JsonObject rjo = this.mc.create(this.osURI, jo, properties);
+		this.reload();
 		// use the maximo connector to connect to oslc server and then POST data
 		// to it
 		return new Resource(rjo, this.mc);
@@ -578,7 +619,7 @@ public class ResourceSet {
 			}
 		}
 		JsonObject rjo = this.mc.create(this.osURI, jo, headers, properties);
-		Util.jsonPrettyPrinter(rjo);
+		this.reload();
 		// use the maximo connector to connect to oslc server and then POST data
 		// to it
 		return new Resource(rjo, this.mc);
@@ -591,7 +632,7 @@ public class ResourceSet {
 	}
 
 	/**
-	 * Count the total number of Resource
+	 * Count the total number of Resources by calling RESTful API
 	 * 
 	 * 
 	 * @throws IOException
@@ -622,6 +663,15 @@ public class ResourceSet {
 		return total;
 	}
 
+	/**
+	 * Count the total number of Resources.
+	 * When fromServer=true, it calls the totalCount API.
+	 * When fromServer=false, it calls the RESTful API.
+	 * 
+	 * @throws IOException
+	 * @throws OslcException
+	 */
+	
 	public int totalCount(boolean fromServer) throws IOException, OslcException {
 		if (!fromServer) {
 			return this.totalCount();
@@ -648,7 +698,7 @@ public class ResourceSet {
 	}
 
 	/**
-	 * get current number of Resource
+	 * get current number of Resource by calling RESTful API
 	 * 
 	 * 
 	 * @throws OslcException

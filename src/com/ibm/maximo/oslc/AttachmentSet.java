@@ -92,6 +92,7 @@ import javax.json.*;
 public class AttachmentSet {
 	private String href;
 	private JsonObject jo;
+	private JsonArray ja;
 	private MaximoConnector mc;
 	private boolean isLoaded = false;
 	
@@ -105,6 +106,11 @@ public class AttachmentSet {
 	
 	public AttachmentSet(JsonObject jo, MaximoConnector mc) {
 		this.jo = jo;
+		if(this.jo.containsKey("rdfs:member")){
+			this.ja = this.jo.getJsonArray("rdfs:member");
+		}else{
+			this.ja = this.jo.getJsonArray("member");
+		}
 		if (jo.containsKey("rdf:about")) {
 			this.href = jo.getString("rdf:about");
 		} else {
@@ -156,6 +162,11 @@ public class AttachmentSet {
 	
 	public AttachmentSet JsonObject(JsonObject jo){
 		this.jo = jo;
+		if(this.jo.containsKey("rdfs:member")){
+			this.ja = this.jo.getJsonArray("rdfs:member");
+		}else{
+			this.ja = this.jo.getJsonArray("member");
+		}
 		if (jo.containsKey("rdf:about")) {
 			this.href = jo.getString("rdf:about");
 		} else {
@@ -183,7 +194,11 @@ public class AttachmentSet {
 		}else{
 			this.jo = this.mc.get(this.href);
 		}
-		
+		if(this.jo.containsKey("rdfs:member")){
+			this.ja = this.jo.getJsonArray("rdfs:member");
+		}else{
+			this.ja = this.jo.getJsonArray("member");
+		}
 		isLoaded = true;
 		return this;
 	}
@@ -203,6 +218,7 @@ public class AttachmentSet {
 	 */
 	public Attachment create(Attachment att) throws IOException, OslcException{
 		JsonObject obj = this.mc.createAttachment(this.href,att.toDoc(), att.getName(),att.getDescription(),att.getMeta());
+		this.reload();
 		return new Attachment(obj,this.mc);
 	}
 	
@@ -211,6 +227,7 @@ public class AttachmentSet {
 			this.href+="/"+relation;
 		}
 		JsonObject obj = this.mc.createAttachment(this.href,att.toDoc(), att.getName(),att.getDescription(),att.getMeta());
+		this.reload();
 		return new Attachment(obj,this.mc);
 	}
 	
@@ -224,6 +241,7 @@ public class AttachmentSet {
 		}else{
 			obj = this.mc.createAttachment(this.href,att.toDoc(), att.getName(),att.getDescription(),att.getMeta());
 		}
+		this.reload();
 		return new Attachment(obj,this.mc);
 	}
 	
@@ -239,13 +257,10 @@ public class AttachmentSet {
 		if(!isLoaded){
 			load();
 		}
-		JsonArray arr = null;
-		if(this.jo.containsKey("rdfs:member")){
-			arr = this.jo.getJsonArray("rdfs:member");
-		}else{
-			arr = this.jo.getJsonArray("member");
+		if(index>=this.ja.size()){
+			return null;
 		}
-		JsonObject obj = (JsonObject)arr.get(index-1); 
+		JsonObject obj = (JsonObject)this.ja.get(index); 
 		return new Attachment(obj,this.mc);
 	}
 	
@@ -254,14 +269,8 @@ public class AttachmentSet {
 			load();
 		}
 		JsonObject obj = null;
-		JsonArray arr = null;
-		if(this.jo.containsKey("rdfs:member")){
-			arr = this.jo.getJsonArray("rdfs:member");
-		}else{
-			arr = this.jo.getJsonArray("member");
-		}
-		for(int i=0;i<arr.size();i++){
-			obj = arr.getJsonObject(i);
+		for(int i=0;i<this.ja.size();i++){
+			obj = this.ja.getJsonObject(i);
 			if(obj.containsKey("href") && obj.getString("href").contains(id)){
 				break;
 			}

@@ -2,8 +2,10 @@
 
 1. Add support to arbitrary parameters for Resource/ResourceSet
 2. Add support to arbitrary headers for get/post/patch/merge/delete
-3. Add new examples about new API in TestOSLCAPI.java.
-4. fix bugs
+3. Add support to order by for ResourceSet
+4. Add support to invoke action with properties for Resource
+5. Add new examples about new API in TestOSLCAPI.java.
+6. Fix bugs
 
 # I. Introduction
 -----

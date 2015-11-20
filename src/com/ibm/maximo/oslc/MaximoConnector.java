@@ -696,7 +696,6 @@ public class MaximoConnector {
 	protected HttpURLConnection setAuth(String uri) throws IOException {
 		if (this.options.getUser() != null
 				&& this.options.getPassword() != null) {
-			System.out.println("&&&&&&&&&&&&&&&&&&&& Login");
 			if (options.isBasicAuth()) {
 				URL httpURL = new URL(uri);
 				HttpURLConnection con = (HttpURLConnection) httpURL
@@ -874,7 +873,7 @@ public class MaximoConnector {
 		con.setRequestMethod("GET");
 		this.setCookiesForSession(con);
 		if (con.getResponseCode() == 401) {
-			System.out.println("+++++++++++++++++++++++ " + "Logout");
+			logger.fine("Logout");
 		}
 		this.valid = false;
 	}

@@ -51,14 +51,23 @@ public class TestOSLCApi{
 		// connection
 		Util.jsonPrettyPrinter("*******************connection******************");
 		MaximoConnector mc = new MaximoConnector(new Options().user("murthy")
-				.password("murthy").mt(false).lean(true).auth("maxauth")
+				.password("murthy").mt(false).lean(false).auth("maxauth")
 				.host("localhost").port(7001)).debug(true);
 		mc.connect();
 		// Example for SELECT
 		Util.jsonPrettyPrinter("*******************Example for SELECT******************");
 		ResourceSet selectSet = mc.resourceSet("MXWODETAIL")
 				.select("spi:wonum", "spi:status", "spi:statusdate")
-				.pageSize(2000).fetch(null);
+				.orderBy("spi:status","spi:statusdate")
+				.pageSize(10).fetch(null);
+		//New Function Test
+		
+		int i=0;
+		Resource r = selectSet.member(i);
+		while(r != null)
+		{
+			r = selectSet.member(++i);
+		}		
 		Util.jsonPrettyPrinter(selectSet.count());
 		
 		
@@ -86,10 +95,6 @@ public class TestOSLCApi{
 					.build();
 		}
 		
-
-		JsonObject jo2 = Json.createObjectBuilder()
-				.add("spi:description", "test2").build();
-
 		Resource createRes = selectSet.create(jo, "wonum", "status",
 				"statusdate", "description");
 		String link = createRes.getURI();
@@ -98,6 +103,16 @@ public class TestOSLCApi{
 		Map<String, Object> getParamsMap = new HashMap<String, Object>();
 		getParamsMap.put("oslc.properties", "wonum,status,statusdate,description");
 		createRes2.loadWithAdditionalParams(getParamsMap);
+		
+		JsonObject jo2 = null;
+		
+		if(mc.isLean()){
+			jo2 = Json.createObjectBuilder()
+					.add("description", "test2").build();
+		}else{
+			jo2 = Json.createObjectBuilder()
+					.add("spi:description", "test2").build();
+		}
 		createRes.update(jo2);
 		
 		
@@ -258,11 +273,19 @@ public class TestOSLCApi{
 		mc.disconnect();
 		mc.connect();
 		
+		
 		// Example for ATTACHMENT/ATTACHMENTSET
 		// *need DOCLINKS
 		Util.jsonPrettyPrinter("*******************Example for ATTACHMENT/ATTACHMENTSET******************");
 		Resource res = selectSet.member(0).load();
 		AttachmentSet ats = res.attachmentSet();
+		
+		i=0;
+		Attachment at = ats.member(i);
+		while(at != null)
+		{
+			at = ats.member(++i);
+		}	
 		
 		String str = "hello world @ "
 				+ Calendar.getInstance().getTime().toString();

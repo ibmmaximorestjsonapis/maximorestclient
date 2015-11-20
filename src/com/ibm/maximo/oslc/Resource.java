@@ -276,18 +276,18 @@ public class Resource {
 		}else{
 			this.jsonObject = this.mc.update(this.href,jo, properties);
 		}
-		this.isLoaded = true;
+		if(properties!=null && properties.length>0){
+			this.isLoaded = true;
+		}else{
+			this.reload();
+		}
+		
 		return this;
 	}
 	
 	public Resource merge(JsonObject jo,String... properties) throws OslcException, IOException
 	{
-		if(this.href.isEmpty()){
-			throw new OslcException("The_resource_is_invalid");
-		}
-		this.jsonObject = this.mc.merge(this.href,jo, properties);
-		this.isLoaded = true;
-		return this;
+		return this.merge(jo, null, properties);
 	}
 	
 	public Resource merge(JsonObject jo, Map<String, Object> headers, String... properties) throws OslcException, IOException
@@ -300,7 +300,11 @@ public class Resource {
 		}else{
 			this.jsonObject = this.mc.merge(this.href,jo, properties);
 		}
-		this.isLoaded = true;
+		if(properties!=null && properties.length>0){
+			this.isLoaded = true;
+		}else{
+			this.reload();
+		}
 		return this;
 	}
 	
@@ -393,6 +397,12 @@ public class Resource {
 	 */
 	public Resource invokeAction(String actionName,JsonObject jo) throws IOException, OslcException{
 		this.mc.update(this.href + (this.href.contains("?")?"":"?")+"&action="+actionName,jo);
+		this.reload();
+		return this;
+	}
+	
+	public Resource invokeAction(String actionName,JsonObject jo, String... properties) throws IOException, OslcException{
+		this.jsonObject = this.mc.update(this.href + (this.href.contains("?")?"":"?")+"&action="+actionName,jo, properties);
 		return this;
 	}
 	

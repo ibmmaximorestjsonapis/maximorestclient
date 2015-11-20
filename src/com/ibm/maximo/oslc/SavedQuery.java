@@ -62,11 +62,4 @@ public class SavedQuery {
 		}
 		return strBuilder.toString();
 	}
-	
-	
-	public static void main(String[] args){
-		SavedQuery qs = new SavedQuery().name("poforStatus").addParam("status", "APPR").addParam("like", true);
-		System.out.println(qs.savedQueryClause());
-	}
-
 }
