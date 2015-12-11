@@ -212,11 +212,11 @@ public class MaximoConnector {
 		return this.httpMethod.equals(HTTP_METHOD_DELETE);
 	}
 
-	boolean isValid(){
+	public boolean isValid(){
 		return this.valid;
 	}
 	
-	boolean isLean(){
+	public boolean isLean(){
 		return this.options.isLean();
 	}
 
