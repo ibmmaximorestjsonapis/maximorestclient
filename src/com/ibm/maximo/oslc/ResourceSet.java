@@ -134,6 +134,7 @@ public class ResourceSet {
 	private String savedQuery = null;
 	private StringBuffer strbWhere;
 	private StringBuffer searchTerms;
+	private StringBuffer searchAttributes;
 	private JsonObject jsonObject;
 	private MaximoConnector mc;
 	private boolean paging = false;
@@ -211,6 +212,14 @@ public class ResourceSet {
 
 	public ResourceSet where(QueryWhere where) {
 		this.whereClause = where.whereClause();
+		return this;
+	}
+	
+	public ResourceSet searchAttributes(String... attributes) {
+		this.searchAttributes = new StringBuffer();
+		for (String attribute : attributes) {
+			searchAttributes.append("" + attribute + ",");
+		}
 		return this;
 	}
 
@@ -510,6 +519,12 @@ public class ResourceSet {
 			if (this.paging == true) {
 				strb.append("&oslc.paging=true");
 			}
+			if (this.searchAttributes != null) {
+				strb.append("&searchAttributes="
+						+ URLEncoder.encode(this.searchAttributes.substring(0,
+								this.searchAttributes.toString().length() - 1),
+								"utf-8"));
+			}
 			if (this.searchTerms != null) {
 				strb.append("&oslc.searchTerms="
 						+ URLEncoder.encode(this.searchTerms.substring(0,
@@ -626,6 +641,85 @@ public class ResourceSet {
 		// use the maximo connector to connect to oslc server and then load data
 		// from it
 	}
+	
+	public Resource sync(JsonObject jo, String... properties)
+			throws IOException, OslcException {
+		if (this.osURI == null) {
+
+			try {
+				this.buildURI();
+			} catch (OslcException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		JsonObject rjo = this.mc.sync(this.osURI, jo, properties);
+		this.reload();
+		// use the maximo connector to connect to oslc server and then POST data
+		// to it
+		return new Resource(rjo, this.mc);
+		// use the maximo connector to connect to oslc server and then load data
+		// from it
+	}
+	
+	public Resource sync(JsonObject jo, Map<String, Object> headers, String... properties)
+			throws IOException, OslcException {
+		if (this.osURI == null) {
+
+			try {
+				this.buildURI();
+			} catch (OslcException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		JsonObject rjo = this.mc.sync(this.osURI, jo, headers, properties);
+		this.reload();
+		// use the maximo connector to connect to oslc server and then POST data
+		// to it
+		return new Resource(rjo, this.mc);
+		// use the maximo connector to connect to oslc server and then load data
+		// from it
+	}
+	
+	public Resource mergeSync(JsonObject jo, String... properties)
+			throws IOException, OslcException {
+		if (this.osURI == null) {
+
+			try {
+				this.buildURI();
+			} catch (OslcException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		JsonObject rjo = this.mc.mergeSync(this.osURI, jo, properties);
+		this.reload();
+		// use the maximo connector to connect to oslc server and then POST data
+		// to it
+		return new Resource(rjo, this.mc);
+		// use the maximo connector to connect to oslc server and then load data
+		// from it
+	}
+	
+	public Resource mergeSync(JsonObject jo, Map<String, Object> headers, String... properties)
+			throws IOException, OslcException {
+		if (this.osURI == null) {
+			try {
+				this.buildURI();
+			} catch (OslcException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		JsonObject rjo = this.mc.mergeSync(this.osURI, jo, headers, properties);
+		this.reload();
+		// use the maximo connector to connect to oslc server and then POST data
+		// to it
+		return new Resource(rjo, this.mc);
+		// use the maximo connector to connect to oslc server and then load data
+		// from it
+	}
 
 	public int configuredPageSize() {
 		return this.pageSize;
@@ -715,5 +809,18 @@ public class ResourceSet {
 			size = this.jsonObject.getJsonArray("rdfs:member").size();
 		}
 		return size;
+	}
+	
+	public BulkProcessor bulk(){
+		return new BulkProcessor(this.mc,this.osURI);
+	}
+	
+	public Aggregation groupBy(){
+		try {
+			return new Aggregation(this.mc,this.buildURI().appURI);
+		} catch (OslcException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 }

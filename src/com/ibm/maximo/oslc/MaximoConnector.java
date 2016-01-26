@@ -109,6 +109,8 @@ public class MaximoConnector {
 	public static final String HTTP_METHOD_MERGE = "MERGE";
 	public static final String HTTP_METHOD_DELETE = "DELETE";
 	public static final String HTTP_METHOD_BULK = "BULK";
+	public static final String HTTP_METHOD_SYNC = "SYNC";
+	public static final String HTTP_METHOD_MERGESYNC = "MERGESYNC";
 
 	public String httpMethod = "GET";// by default it is get
 
@@ -212,6 +214,18 @@ public class MaximoConnector {
 		return this.httpMethod.equals(HTTP_METHOD_DELETE);
 	}
 
+	boolean isBULK() {
+		return this.httpMethod.equals(HTTP_METHOD_BULK);
+	}
+	
+	boolean isSYNC() {
+		return this.httpMethod.equals(HTTP_METHOD_SYNC);
+	}
+	
+	boolean isMERGESYNC() {
+		return this.httpMethod.equals(HTTP_METHOD_MERGESYNC);
+	}
+	
 	public boolean isValid(){
 		return this.valid;
 	}
@@ -308,6 +322,62 @@ public class MaximoConnector {
 		JsonObject obj = rdr.readObject();
 		con.disconnect();
 		return obj;
+	}
+	
+	/**
+	 * 
+	 * Fetch Group By data
+	 * 
+	 * @param uri
+	 * @return JsonArray
+	 * @throws IOException
+	 * @throws OslcException
+	 */
+	
+	public synchronized JsonArray groupBy(String uri) throws IOException, OslcException {
+		return this.groupBy(uri, null);
+	}
+	
+	public synchronized JsonArray groupBy(String uri, Map<String,Object> headers) throws IOException, OslcException {
+		if(!isValid()){
+			throw new OslcException("The instance of MaximoConnector is not valid.");
+		}
+		String publicHost = this.options.getHost();
+		if(this.options.getPort()!=-1){
+			publicHost+= ":" + String.valueOf(this.options.getPort());
+		}
+		if(!uri.contains(publicHost)){
+			URL tempURL = new URL(uri);
+			String currentHost = tempURL.getHost();
+			if(tempURL.getPort()!=-1){
+				currentHost+= ":" + String.valueOf(tempURL.getPort());
+			}
+			uri = uri.replace(currentHost, publicHost);
+		}
+		logger.fine(uri);
+		URL httpURL = new URL(uri);
+		HttpURLConnection con = (HttpURLConnection) httpURL.openConnection();
+		con = this.setMethod(con, "GET");
+		if (headers!=null && !headers.isEmpty() ) {
+			con = this.setHeaders(con, headers);
+		}
+		if (cookies == null)
+			this.connect();
+		this.setCookiesForSession(con);
+		int resCode = con.getResponseCode();
+		InputStream inStream = null;
+		if (resCode >= 400) {
+				inStream = con.getErrorStream();
+				JsonReader rdr = Json.createReader(inStream);
+				JsonObject obj = rdr.readObject();
+				throw new OslcException(obj);
+		} else {
+			inStream = con.getInputStream();
+		}
+		JsonReader rdr = Json.createReader(inStream);
+		JsonArray arr = rdr.readArray();
+		con.disconnect();
+		return arr;
 	}
 	
 	/**
@@ -427,9 +497,18 @@ public class MaximoConnector {
 			throw new OslcException(obj);
 		}
 		JsonObject obj;
-		inStream = con.getInputStream();
-		JsonReader rdr = Json.createReader(inStream);
-		obj = rdr.readObject();
+		if(properties.length == 0){
+			String href = con.getHeaderField("Location");
+			if(this.options.isLean()){
+				obj = Json.createObjectBuilder().add("rdf:resource", href).build();
+			}else{
+				obj = Json.createObjectBuilder().add("href", href).build();
+			}
+		}else{
+			inStream = con.getInputStream();
+			JsonReader rdr = Json.createReader(inStream);
+			obj = rdr.readObject();
+		}
 		return obj;
 	}
 
@@ -629,6 +708,197 @@ public class MaximoConnector {
 		JsonObject obj = rdr.readObject();
 		return obj;
 	}
+	
+	public synchronized JsonArray bulk(String uri, JsonArray ja)
+			throws IOException, OslcException {
+		return this.bulk(uri, ja, null);
+	}
+	
+	public synchronized JsonArray bulk(String uri, JsonArray ja, Map<String,Object> headers)
+			throws IOException, OslcException {
+		if(!isValid()){
+			throw new OslcException("The instance of MaximoConnector is not valid.");
+		}
+		String publicHost = this.options.getHost();
+		if(this.options.getPort()!=-1){
+			publicHost+= ":" + String.valueOf(this.options.getPort());
+		}
+		if(!uri.contains(publicHost)){
+			URL tempURL = new URL(uri);
+			String currentHost = tempURL.getHost();
+			if(tempURL.getPort()!=-1){
+				currentHost+= ":" + String.valueOf(tempURL.getPort());
+			}
+			uri = uri.replace(currentHost, publicHost);
+		}
+		logger.fine(uri);
+		URL httpURL = new URL(uri);
+		HttpURLConnection con = (HttpURLConnection) httpURL
+				.openConnection();
+		con = this.setMethod(con, "BULK");
+		if (headers!=null && !headers.isEmpty() ) {
+			con = this.setHeaders(con, headers);
+		}
+		if (cookies == null)
+			this.connect();
+		this.setCookiesForSession(con);
+		OutputStreamWriter writer = new OutputStreamWriter(
+				con.getOutputStream());
+		if (ja.isEmpty()) {
+			throw new OslcException("jo_is_invalid");
+		}
+		writer.write(ja.toString());
+		writer.flush();
+		writer.close();
+		int resCode = con.getResponseCode();
+		// String resLine = con.getResponseMessage();
+		InputStream inStream;
+		if (resCode >= 400) {
+			inStream = con.getErrorStream();
+			JsonReader rdr = Json.createReader(inStream);
+			JsonObject obj = rdr.readObject();
+			obj = (JsonObject) obj.get("Error");
+			throw new OslcException(resCode, obj.get("message").toString());
+		}
+		if(resCode == 204){
+			return null;
+		}
+		inStream = con.getInputStream();
+		JsonReader rdr = Json.createReader(inStream);
+		JsonArray arr = rdr.readArray();
+		return arr;
+	}
+	
+	public synchronized JsonObject sync(String uri, JsonObject jo, String... properties)
+			throws IOException, OslcException {
+		return this.sync(uri, jo, null, properties);
+	}
+	
+	public synchronized JsonObject sync(String uri, JsonObject jo, Map<String,Object> headers, String... properties)
+			throws IOException, OslcException {
+		if(!isValid()){
+			throw new OslcException("The instance of MaximoConnector is not valid.");
+		}
+		String publicHost = this.options.getHost();
+		if(this.options.getPort()!=-1){
+			publicHost+= ":" + String.valueOf(this.options.getPort());
+		}
+		if(!uri.contains(publicHost)){
+			URL tempURL = new URL(uri);
+			String currentHost = tempURL.getHost();
+			if(tempURL.getPort()!=-1){
+				currentHost+= ":" + String.valueOf(tempURL.getPort());
+			}
+			uri = uri.replace(currentHost, publicHost);
+		}
+		logger.fine(uri);
+		URL httpURL = new URL(uri);
+		HttpURLConnection con = (HttpURLConnection) httpURL
+				.openConnection();
+		con = this.setMethod(con, "SYNC",properties);
+		if (headers!=null && !headers.isEmpty() ) {
+			con = this.setHeaders(con, headers);
+		}
+		if (cookies == null)
+			this.connect();
+		this.setCookiesForSession(con);
+		OutputStreamWriter writer = new OutputStreamWriter(
+				con.getOutputStream());
+		if (jo.isEmpty()) {
+			throw new OslcException("jo_is_invalid");
+		}
+		writer.write(jo.toString());
+		writer.flush();
+		writer.close();
+		int resCode = con.getResponseCode();
+		// String resLine = con.getResponseMessage();
+		InputStream inStream;
+		if (resCode >= 400) {
+			inStream = con.getErrorStream();
+			JsonReader rdr = Json.createReader(inStream);
+			JsonObject obj = rdr.readObject();
+			obj = (JsonObject) obj.get("Error");
+			throw new OslcException(resCode, obj.get("message").toString());
+		}
+		if(resCode == 204){
+			return null;
+		}
+		JsonObject obj;
+		if(properties.length == 0){
+			String href = con.getHeaderField("Location");
+			if(this.options.isLean()){
+				obj = Json.createObjectBuilder().add("rdf:resource", href).build();
+			}else{
+				obj = Json.createObjectBuilder().add("href", href).build();
+			}
+		}else{
+			inStream = con.getInputStream();
+			JsonReader rdr = Json.createReader(inStream);
+			obj = rdr.readObject();
+		}
+		return obj;
+	}
+	
+	public synchronized JsonObject mergeSync(String uri, JsonObject jo, String... properties)
+			throws IOException, OslcException {
+		return this.mergeSync(uri, jo, null, properties);
+	}
+	
+	public synchronized JsonObject mergeSync(String uri, JsonObject jo, Map<String,Object> headers, String... properties)
+			throws IOException, OslcException {
+		if(!isValid()){
+			throw new OslcException("The instance of MaximoConnector is not valid.");
+		}
+		String publicHost = this.options.getHost();
+		if(this.options.getPort()!=-1){
+			publicHost+= ":" + String.valueOf(this.options.getPort());
+		}
+		if(!uri.contains(publicHost)){
+			URL tempURL = new URL(uri);
+			String currentHost = tempURL.getHost();
+			if(tempURL.getPort()!=-1){
+				currentHost+= ":" + String.valueOf(tempURL.getPort());
+			}
+			uri = uri.replace(currentHost, publicHost);
+		}
+		logger.fine(uri);
+		URL httpURL = new URL(uri);
+		HttpURLConnection con = (HttpURLConnection) httpURL
+				.openConnection();
+		con = this.setMethod(con, "MERGESYNC",properties);
+		if (headers!=null && !headers.isEmpty() ) {
+			con = this.setHeaders(con, headers);
+		}
+		if (cookies == null)
+			this.connect();
+		this.setCookiesForSession(con);
+		OutputStreamWriter writer = new OutputStreamWriter(
+				con.getOutputStream());
+		if (jo.isEmpty()) {
+			throw new OslcException("jo_is_invalid");
+		}
+		writer.write(jo.toString());
+		writer.flush();
+		writer.close();
+		int resCode = con.getResponseCode();
+		// String resLine = con.getResponseMessage();
+		InputStream inStream;
+		if (resCode >= 400) {
+			inStream = con.getErrorStream();
+			JsonReader rdr = Json.createReader(inStream);
+			JsonObject obj = rdr.readObject();
+			obj = (JsonObject) obj.get("Error");
+			throw new OslcException(resCode, obj.get("message").toString());
+		}
+		if(resCode == 204){
+			return null;
+		}
+		inStream = con.getInputStream();
+		JsonReader rdr = Json.createReader(inStream);
+		JsonObject obj = rdr.readObject();
+		return obj;
+	}
+	
 	/**
 	 * Delete the resource/attachment
 	 * @throws IOException
@@ -780,6 +1050,25 @@ public class MaximoConnector {
 			con.setDoOutput(true);
 			con.setRequestProperty("x-public-uri", this.options.getPublicURI());
 			con.setRequestProperty("x-method-override", HTTP_METHOD_PATCH);
+			con.setRequestProperty("patchtype",HTTP_METHOD_MERGE);
+		} else if (this.isBULK()) {
+			con.setRequestMethod(HTTP_METHOD_POST);
+			con.setRequestProperty("Content-Type", "application/json");
+			con.setDoOutput(true);
+			con.setRequestProperty("x-public-uri", this.options.getPublicURI());
+			con.setRequestProperty("x-method-override", HTTP_METHOD_BULK);
+		} else if (this.isSYNC()) {
+			con.setRequestMethod(HTTP_METHOD_POST);
+			con.setRequestProperty("Content-Type", "application/json");
+			con.setDoOutput(true);
+			con.setRequestProperty("x-public-uri", this.options.getPublicURI());
+			con.setRequestProperty("x-method-override", HTTP_METHOD_SYNC);
+		} else if (this.isMERGESYNC()) {
+			con.setRequestMethod(HTTP_METHOD_POST);
+			con.setRequestProperty("Content-Type", "application/json");
+			con.setDoOutput(true);
+			con.setRequestProperty("x-public-uri", this.options.getPublicURI());
+			con.setRequestProperty("x-method-override", HTTP_METHOD_SYNC);
 			con.setRequestProperty("patchtype",HTTP_METHOD_MERGE);
 		} else if (this.isDELETE()) {
 			con.setRequestMethod(HTTP_METHOD_DELETE);
