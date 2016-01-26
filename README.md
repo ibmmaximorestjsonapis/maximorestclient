@@ -1,3 +1,11 @@
+# Updated
+
+1. Add support to group by for ResourceSet
+2. Add support to sync for ResourceSet
+3. Add support to bulk for ResourceSet
+4. Add new examples about new API in TestOSLCAPI.java.
+5. Fix bugs
+
 # Maximo Rest Client 1.0 Released!
 
 1. Add support to arbitrary parameters for Resource/ResourceSet
