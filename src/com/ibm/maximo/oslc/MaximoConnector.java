@@ -95,13 +95,14 @@ public class MaximoConnector {
 	
 	public static final Logger logger = Logger.getLogger(MaximoConnector.class.getName());
 	private Options options;
-	private boolean valid = true;
+	private boolean valid = false;
 	private boolean debug = false;
+	private int lastResponseCode = 0;
 	// private JsonObject jo;
 
 	private List<String> cookies = null;
-	private JsonObject version;
-	private JsonObject userInfo;
+//	private JsonObject version;
+//	private JsonObject userInfo;
 
 	public static final String HTTP_METHOD_POST = "POST";
 	public static final String HTTP_METHOD_GET = "GET";
@@ -242,8 +243,8 @@ public class MaximoConnector {
 	 */
 
 	public void connect() throws IOException, OslcException {
-		if(!isValid()){
-			throw new OslcException("The instance of MaximoConnector is not valid.");
+		if(isValid()){
+			throw new OslcException("You are already connected.");
 		}
 		cookies = null;
 		HttpURLConnection con = this.setAuth(this.options.getAppURI());
@@ -252,6 +253,7 @@ public class MaximoConnector {
 		}
 		
 		int i = con.getResponseCode();
+		lastResponseCode = i;
 		
 		if( i == -1 ){
 			throw new OslcException("Invalid_Request");
@@ -259,12 +261,13 @@ public class MaximoConnector {
 		
 		logger.fine(this.options.getAppURI());
 		if(i<400){
+			this.valid = true;
 			cookies = con.getHeaderFields().get("Set-Cookie");
-			JsonObject oslcHome = this.get(this.options.getAppURI());
-			if(oslcHome!=null){
+//			JsonObject oslcHome = this.get(this.options.getAppURI());
+//			if(oslcHome!=null){
 //				this.version(oslcHome);
 //				this.userInfo(oslcHome);
-			}
+//			}
 		}
 		if (cookies == null) {
 			InputStream inStream = null;
@@ -309,6 +312,7 @@ public class MaximoConnector {
 			this.connect();
 		this.setCookiesForSession(con);
 		int resCode = con.getResponseCode();
+		lastResponseCode = resCode;
 		InputStream inStream = null;
 		if (resCode >= 400) {
 				inStream = con.getErrorStream();
@@ -365,6 +369,7 @@ public class MaximoConnector {
 			this.connect();
 		this.setCookiesForSession(con);
 		int resCode = con.getResponseCode();
+		lastResponseCode = resCode;
 		InputStream inStream = null;
 		if (resCode >= 400) {
 				inStream = con.getErrorStream();
@@ -420,6 +425,7 @@ public class MaximoConnector {
 			this.connect();
 		this.setCookiesForSession(con);
 		int resCode = con.getResponseCode();
+		lastResponseCode = resCode;
 		InputStream inStream = null;
 		if (resCode >= 400) {
 				inStream = con.getErrorStream();
@@ -489,6 +495,7 @@ public class MaximoConnector {
 		writer.flush();
 		writer.close();
 		int resCode = con.getResponseCode();
+		lastResponseCode = resCode;
 		InputStream inStream;
 		if (resCode >= 400) {
 			inStream = con.getErrorStream();
@@ -567,6 +574,7 @@ public class MaximoConnector {
 		writer.flush();
 		writer.close();
 		int resCode = con.getResponseCode();
+		lastResponseCode = resCode;
 		InputStream inStream;
 		if (resCode >= 400) {
 			inStream = con.getErrorStream();
@@ -633,6 +641,7 @@ public class MaximoConnector {
 		writer.flush();
 		writer.close();
 		int resCode = con.getResponseCode();
+		lastResponseCode = resCode;
 		InputStream inStream;
 		if (resCode >= 400) {
 			inStream = con.getErrorStream();
@@ -691,6 +700,7 @@ public class MaximoConnector {
 		writer.flush();
 		writer.close();
 		int resCode = con.getResponseCode();
+		lastResponseCode = resCode;
 		// String resLine = con.getResponseMessage();
 		InputStream inStream;
 		if (resCode >= 400) {
@@ -751,6 +761,7 @@ public class MaximoConnector {
 		writer.flush();
 		writer.close();
 		int resCode = con.getResponseCode();
+		lastResponseCode = resCode;
 		// String resLine = con.getResponseMessage();
 		InputStream inStream;
 		if (resCode >= 400) {
@@ -811,6 +822,7 @@ public class MaximoConnector {
 		writer.flush();
 		writer.close();
 		int resCode = con.getResponseCode();
+		lastResponseCode = resCode;
 		// String resLine = con.getResponseMessage();
 		InputStream inStream;
 		if (resCode >= 400) {
@@ -881,6 +893,7 @@ public class MaximoConnector {
 		writer.flush();
 		writer.close();
 		int resCode = con.getResponseCode();
+		lastResponseCode = resCode;
 		// String resLine = con.getResponseMessage();
 		InputStream inStream;
 		if (resCode >= 400) {
@@ -937,6 +950,7 @@ public class MaximoConnector {
 			this.connect();
 		this.setCookiesForSession(con);
 		int resCode = con.getResponseCode();
+		lastResponseCode = resCode;
 		if (resCode >= 400) {
 				InputStream inStream = con.getErrorStream();
 				JsonReader rdr = Json.createReader(inStream);
@@ -1143,6 +1157,12 @@ public class MaximoConnector {
 //	public JsonObject getUserInfo(){
 //		return this.userInfo;
 //	}
+	/**
+	 * Get the last response code
+	 */
+	public int getLastResponseCode() {
+		return lastResponseCode;
+	}
 	
 	/**
 	 * Disconnect with Maximo Server
@@ -1161,7 +1181,9 @@ public class MaximoConnector {
 		HttpURLConnection con = (HttpURLConnection) httpURL.openConnection();
 		con.setRequestMethod("GET");
 		this.setCookiesForSession(con);
-		if (con.getResponseCode() == 401) {
+		
+		lastResponseCode = con.getResponseCode();
+		if (lastResponseCode == 401) {
 			logger.fine("Logout");
 		}
 		this.valid = false;
