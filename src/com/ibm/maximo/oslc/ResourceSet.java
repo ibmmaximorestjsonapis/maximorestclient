@@ -157,7 +157,8 @@ public class ResourceSet {
 	}
 
 	public ResourceSet(URL publicURI, MaximoConnector mc) {
-		this.publicURI = publicURI.getPath();
+		this.mc = mc;
+		this.publicURI = publicURI.toString();
 	}
 
 	/**
@@ -347,7 +348,6 @@ public class ResourceSet {
 		try {
 			this.buildURI();
 		} catch (OslcException e) {
-			// rj
 			e.printStackTrace();
 		}
 		this.jsonObject = this.mc.get(this.appURI);
@@ -495,7 +495,7 @@ public class ResourceSet {
 			if (this.osName != null) {
 				strb.append("/os/" + this.osName.toLowerCase());
 			} else {
-				throw new OslcException("osName_is_invalid");
+				//throw new OslcException("osName_is_invalid");
 			}
 
 			strb.append(this.publicURI.contains("?") ? "" : "?").append(
