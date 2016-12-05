@@ -11,6 +11,7 @@
 package com.ibm.maximo.oslc;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,9 +38,44 @@ import com.ibm.maximo.oslc.Util;
  */
 
 public class TestOSLCApi{
+	
+	public static void exampleForRepPo() throws IOException, OslcException
+	{
+		MaximoConnector mc = new MaximoConnector(new Options().user("wilson")
+				.password("wilson").mt(false).lean(true).auth("maxauth")
+				.host("localhost").port(7001)).debug(true);
+		mc.connect();
+		
+		ResourceSet selectSet = mc.resourceSet("REP_PO")
+				.select("ponum", "status", "statusdate")
+				.pageSize(10).fetch(null);
+
+		
+		int i=0;
+		Resource r = selectSet.member(i).load();
+		while(r != null)
+		{
+			r.reload();
+			Util.jsonPrettyPrinter(r.toJSON());
+			r = selectSet.member(++i);
+		}
+		
+		Util.jsonPrettyPrinter(selectSet.count());
+		
+		Resource resource = selectSet.member(0);		
+		Util.jsonPrettyPrinter(resource.toJSON());
+		
+		URL polineHref = new URL(resource.toJSON().getString("poline_collectionref"));
+		ResourceSet polineSet = new ResourceSet(polineHref,mc).fetch();
+		Resource polineRes = polineSet.member(0);
+		Util.jsonPrettyPrinter(polineRes.toJSON());
+	}
 
 	public static void main(String[] args) throws OslcException, IOException,
 			InterruptedException, DatatypeConfigurationException {
+		
+		exampleForRepPo();
+		
 		// connection
 		Util.jsonPrettyPrinter("*******************connection******************");
 		MaximoConnector mc = new MaximoConnector(new Options().user("wilson")
@@ -58,6 +94,7 @@ public class TestOSLCApi{
 		// Example for HasTerms 
 		Util.jsonPrettyPrinter("*******************Example for HASTERMS******************");
 		ResourceSet setHasTerms = mc.resourceSet("MXSR")
+				.searchAttributes("description")
 				.hasTerms("emai", "financ")
 				.select("description", "ticketid").pageSize(5)
 				.fetch(null);
@@ -97,12 +134,12 @@ public class TestOSLCApi{
 		//Example for Sync *NEW
 		ResourceSet syncSet = mc.resourceSet("MXWODETAIL");
 		JsonObject createSyncObj = Json.createObjectBuilder().add("siteid", "BEDFORD").add("description", "sync create").add("wonum","sync10002").build();
-		Resource syncRes = syncSet.sync(createSyncObj);
+		Resource syncRes = syncSet.sync(createSyncObj,"siteid");
 		Util.jsonPrettyPrinter(syncRes.getURI());
 		
 		
 		JsonObject updateSyncObj = Json.createObjectBuilder().add("siteid", "BEDFORD").add("description", "sync update").add("wonum","sync10002").build();
-		Resource syncResUpdate = syncSet.sync(updateSyncObj);
+		Resource syncResUpdate = syncSet.sync(updateSyncObj,"siteid");
 		Util.jsonPrettyPrinter(syncResUpdate.getURI());
 		syncResUpdate.delete();
 		
