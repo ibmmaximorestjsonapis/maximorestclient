@@ -252,6 +252,8 @@ public class MaximoConnector {
 			con = this.setMethod(con, "GET");
 		}
 		
+		logger.fine(this.options.getAppURI());
+		
 		int i = con.getResponseCode();
 		lastResponseCode = i;
 		
@@ -259,7 +261,6 @@ public class MaximoConnector {
 			throw new OslcException("Invalid_Request");
 		}
 		
-		logger.fine(this.options.getAppURI());
 		if(i<400){
 			this.valid = true;
 			cookies = con.getHeaderFields().get("Set-Cookie");
