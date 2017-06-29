@@ -12,6 +12,7 @@ package com.ibm.maximo.oslc;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.Proxy;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -241,19 +242,32 @@ public class MaximoConnector {
 	 * @throws IOException
 	 * @throws OslcException
 	 */
-
+	
 	public void connect() throws IOException, OslcException {
+		this.connect(null);
+	}
+
+	/**
+	 * Connect to Maximo Server with Proxy
+	 * 
+	 * @throws IOException
+	 * @throws OslcException
+	 */
+	
+	public void connect(Proxy proxy) throws IOException, OslcException {
 		if(isValid()){
 			throw new OslcException("You are already connected.");
 		}
 		cookies = null;
-		HttpURLConnection con = this.setAuth(this.options.getAppURI());
+		
+		String uri = this.options.getAppURI();
+		logger.fine(uri);
+		
+		HttpURLConnection con = this.setAuth(uri, proxy);
 		if(!this.options.isFormAuth()){
 			con = this.setMethod(con, "GET");
 		}
-		
-		logger.fine(this.options.getAppURI());
-		
+
 		int i = con.getResponseCode();
 		lastResponseCode = i;
 		
@@ -979,13 +993,20 @@ public class MaximoConnector {
 	}
 
 	protected HttpURLConnection setAuth(String uri) throws IOException {
+		return this.setAuth(uri, null);
+	}
+	
+	protected HttpURLConnection setAuth(String uri, Proxy proxy) throws IOException {
 		if (this.options.getUser() != null
 				&& this.options.getPassword() != null) {
 			if (options.isBasicAuth()) {
 				URL httpURL = new URL(uri);
-				HttpURLConnection con = (HttpURLConnection) httpURL
-						.openConnection();
-
+				HttpURLConnection con = null;
+				if(proxy != null){
+					con = (HttpURLConnection) httpURL.openConnection(proxy);
+				}else{
+					con = (HttpURLConnection) httpURL.openConnection();
+				}
 				String encodedUserPwd = encode(this.options.getUser(),
 						this.options.getPassword());
 				con.setRequestProperty("Authorization", "Basic "
@@ -994,9 +1015,12 @@ public class MaximoConnector {
 			} else if (options.isMaxAuth()) {
 				URL httpURL = new URL(uri);
 
-				// long t1 = System.currentTimeMillis();
-				HttpURLConnection con = (HttpURLConnection) httpURL
-						.openConnection();
+				HttpURLConnection con = null;
+				if(proxy != null){
+					con = (HttpURLConnection) httpURL.openConnection(proxy);
+				}else{
+					con = (HttpURLConnection) httpURL.openConnection();
+				}
 
 				String encodedUserPwd = encode(this.options.getUser(),
 						this.options.getPassword());
@@ -1006,8 +1030,12 @@ public class MaximoConnector {
 				String appURI = uri;
 				appURI += "/j_security_check";
 				URL httpURL = new URL(appURI);
-				HttpURLConnection con = (HttpURLConnection) httpURL
-						.openConnection();
+				HttpURLConnection con = null;
+				if(proxy != null){
+					con = (HttpURLConnection) httpURL.openConnection(proxy);
+				}else{
+					con = (HttpURLConnection) httpURL.openConnection();
+				}
 				con.setInstanceFollowRedirects(false);
 				con.setRequestMethod("POST");
 				con.setRequestProperty("Accept",
