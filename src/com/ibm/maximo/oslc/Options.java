@@ -30,7 +30,7 @@ package com.ibm.maximo.oslc;
 public class Options {
 
 	private String host;
-	private int port = 80;
+	private Integer port = null;
 	private String authMode = null;
 	public static final String AUTH_BASIC = "basic";
 	public static final String AUTH_MAXAUTH = "maxauth";
@@ -195,7 +195,11 @@ public class Options {
 			}		
 		}
 		StringBuffer strb = new StringBuffer(ssl?"https://":"http://");
-		strb.append(host).append(":"+String.valueOf(port)).append("/"+appContext).append("/"+this.apiContext);
+		strb.append(host);
+		if(this.port != null){
+			strb.append(":"+String.valueOf(port));
+		}
+		strb.append("/"+appContext).append("/"+this.apiContext);
 		if(mt == true){
 			strb.append(strb.toString().contains("?")?"":"?").append("&_tenantcode="+tenantcode);
 		}
