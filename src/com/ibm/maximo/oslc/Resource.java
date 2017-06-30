@@ -105,8 +105,10 @@ public class Resource {
 			this.href = jo.getString("rdf:about");
 		}else if(jo.containsKey("rdf:resoure")){
 			this.href = jo.getString("rdf:resource");
-		}else{
+		}else if(jo.containsKey("href")){
 			this.href = jo.getString("href");
+		}else if(jo.containsKey("localref")){
+			this.href = jo.getString("localref");
 		}
 	}
 	
@@ -117,8 +119,10 @@ public class Resource {
 			this.href = jo.getString("rdf:about");
 		}else if(jo.containsKey("rdf:resource")){
 			this.href = jo.getString("rdf:resource");
-		}else{
+		}else if(jo.containsKey("href")){
 			this.href = jo.getString("href");
+		}else if(jo.containsKey("localref")){
+			this.href = jo.getString("localref");
 		}
 		this.mc = mc;
 	}
@@ -206,7 +210,7 @@ public class Resource {
 			throw new OslcException(
 					"The resource has been loaded, please call reload for refreshing");
 		}
-		if (this.href.isEmpty()) {
+		if (this.href == null || this.href.isEmpty()) {
 			throw new OslcException("The_resource_is_invalid");
 		}
 		StringBuilder strb = new StringBuilder();
