@@ -222,7 +222,11 @@ public class Options {
 				this.port = Integer.valueOf(strs[1]);
 		}
 		StringBuffer strb = new StringBuffer(ssl?"https://":"http://");
-		strb.append(host).append(":"+String.valueOf(port)).append("/"+appContext).append("/"+this.apiContext);
+		strb.append(host);
+		if(this.port != null){
+			strb.append(":"+String.valueOf(port));
+		}
+		strb.append("/"+appContext).append("/"+this.apiContext);
 		//if(mt == true) strb.append("?&_tenantcode="+tenantcode);
 		this.publicURI = strb.toString();
 		return this.publicURI;
