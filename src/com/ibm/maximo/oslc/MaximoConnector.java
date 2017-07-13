@@ -82,7 +82,7 @@ import javax.json.*;
  * </pre>
  * 
  * <p>
- * The following examples show how to get {@code ResourceSet} or {@code Resource} or {@code Attachment} by {@code MaximoConnector}</p>
+ * The following examples  show how to get {@code ResourceSet} or {@code Resource} or {@code Attachment} by {@code MaximoConnector}</p>
  * <pre><code>
  * ResourceSet rs = mc.resourceSet(osName);
  * ResourceSet rs = mc.resourceSet(url);

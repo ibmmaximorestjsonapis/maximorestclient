@@ -85,6 +85,7 @@ public class QuerySelect {
 	
 	public static void main(String[] args)
 	{
+		
 		System.out.println(new QuerySelect().select("a.b.*","a.c","x.y.z","x.f.g","x.y.e"));
 	}
 
