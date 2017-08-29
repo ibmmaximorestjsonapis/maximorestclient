@@ -100,6 +100,20 @@ public class TestOSLCApi{
 				.fetch(null);
 		Util.jsonPrettyPrinter(setHasTerms.toJSON());
 		
+		//Functionality Test for pre-load
+		int index=0;
+		Resource preLoadResource = setHasTerms.member(index);
+		while(preLoadResource != null)
+		{
+			if(index%2 != 0) {
+				preLoadResource.setLoaded(true);
+			}
+			Util.jsonPrettyPrinter(preLoadResource.toJSON());
+			preLoadResource = setHasTerms.member(++index);
+		}		
+		Util.jsonPrettyPrinter(setHasTerms.count());
+		
+		
 		// Example for SELECT
 		Util.jsonPrettyPrinter("*******************Example for SELECT******************");
 		ResourceSet selectSet = mc.resourceSet("MXWODETAIL")
@@ -152,6 +166,8 @@ public class TestOSLCApi{
 			r = selectSet.member(++i);
 		}		
 		Util.jsonPrettyPrinter(selectSet.count());
+		
+
 		
 		
 		// Example for SELECT with Additional Params *NEW
