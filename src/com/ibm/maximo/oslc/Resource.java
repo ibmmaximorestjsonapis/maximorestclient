@@ -414,6 +414,12 @@ public class Resource {
 		this.mc.delete(this.href);
 	}
 	
+	/**
+	 * Support pre-load resource.
+	 * @param isLoaded
+	 */
 	
-	
+	public void setLoaded(boolean isLoaded) {
+		this.isLoaded = isLoaded;
+	}
 }
