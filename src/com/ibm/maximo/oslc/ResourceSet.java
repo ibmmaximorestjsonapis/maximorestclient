@@ -125,7 +125,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
  */
 public class ResourceSet {
 	
-	public static final Logger logger = Logger.getLogger(MaximoConnector.class.getName());
+	public static final Logger logger = Logger.getLogger(ResourceSet.class.getName());
 	
 	private int pageSize = -1;
 	private String osName;
