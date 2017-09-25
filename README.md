@@ -124,7 +124,7 @@ Options option = new Options().user("maxadmin").password("maxadmin").auth("maxau
 * For environment, it needs the data mode setting, host, port and if it the debug is enabled. The sample code is as following,
 
 ```java
-option.host("host").port("7001").lean(true);
+option.host("host").port(7001).lean(true);
 ```
 
 * Based on this configuration, connect to the Maximo using MaximoConnector.
@@ -148,32 +148,32 @@ mc.connect();
 By object structure name:
   
 ```java
-ResourceSet rs = mc.resourceSet("mxwodetail").select("wonum","status").where("status").equalTo("APPR").fetch();
+ResourceSet rs = mc.resourceSet("mxwodetail").select("wonum","status").where((new QueryWhere()).where("status").equalTo("APPR")).fetch();
 ```
 
 By RESTful URI :
   
 ```java
-ResourceSet rs = mc.resourceSet(new URL("http://host:port/maximo/oslc/os/mxwodetail")).select("wonum","status").where("status").equalTo("APPR").fetch();
+ResourceSet rs = mc.resourceSet(new URL("http://host:port/maximo/oslc/os/mxwodetail")).select("wonum","status").where((new QueryWhere()).where("status").equalTo("APPR")).fetch();
 ```
 
 * There is a paging API for Maximo rest client, that allows forward and backward paging of data by the client.
   * For the page size = 10: 
   
 ```java
-ResourceSet rs = mc.resourceSet("mxwodetail").select("wonum","status").where("status").equalTo("APPR").pageSize(10).fetch();
+ResourceSet rs = mc.resourceSet("mxwodetail").select("wonum","status").where((new QueryWhere()).where("status").equalTo("APPR")).pageSize(10).fetch();
 ```
 
 * For the default paging (assumes a default page size is configured on the Resource's Object Structure. If no page size is configured, this directive is ignored and all records matching the query filter is returned): 
 
 ```java
-ResourceSet rs = mc.resourceSet("mxwodetail").select("wonum","status").where("status").equalTo("APPR").paging().fetch();
+ResourceSet rs = mc.resourceSet("mxwodetail").select("wonum","status").where((new QueryWhere()).where("status").equalTo("APPR")).paging(true).fetch();
 ```
 
 * For the stablepaging:
 
 ```java
-ResourceSet rs = mc.resourceSet("mxwodetail").select("wonum","status").where("status").equalTo("APPR").stablePaging().fetch();
+ResourceSet rs = mc.resourceSet("mxwodetail").select("wonum","status").where((new QueryWhere()).where("status").equalTo("APPR")).stablePaging(true).fetch();
 ```
 
 * Turn to next or previous page.
@@ -203,7 +203,7 @@ byte[] jodata = rs.toJSONBytes();
 By specific URI:
   
 ```java
-String woUri = "http://host/maximo/oslc/os/mxwodetail/_QkVERk9SRC8xMDAw";
+String woUri = "http://host:port/maximo/oslc/os/mxwodetail/_QkVERk9SRC8xMDAw";
 ```
 
 Using ResourceSet
@@ -273,14 +273,18 @@ for(int i=0;i<rs.count();i++){
 * Travel through all of the workorders.
 
 ```java
-for(int i=0;i<rs.totalCount();i++)
-{
-  for(int j=0;j<rs.count();j++)
+for(int i=0;i<rs.totalCount();)
+{	
+	for(int j=0;j<rs.count();j++)
 	{
-		Resource re = rs.member(i);
-		...//other operations
+		Resource re = rs.member(j);
 	}
-	rs.nextPage();
+	i+=rs2.count();
+	if(!rs2.hasNextPage())
+	{
+		break;
+	}
+	rs2.nextPage();
 }
 ```
 
@@ -415,8 +419,8 @@ Resource poRes  = reSet.member(0);
 ```
 
 * Build a valid JsonObject for adding a new Child Object for Resource
-```java
 
+```java
 JsonObject polineObjIn = Json.createObjectBuilder().add("polinenum", 1).add("itemnum", "560-00").add("storeloc", "CENTRAL").build();
 JsonArray polineArray = Json.createArrayBuilder().add(polineObjIn).build();
 JsonObject poObj = Json.createObjectBuilder().add("poline", polineArray).build();
@@ -587,7 +591,7 @@ ResourceSet rs = mc.resourceSet("mxwodetail").
 By specific URI:
   
 ```java
-String woUri = "http://host/maximo/oslc/os/mxwodetail/_QkVERk9SRC8xMDAw";
+String woUri = "http://host:port/maximo/oslc/os/mxwodetail/_QkVERk9SRC8xMDAw";
 ```
 
 Using ResourceSet
@@ -677,7 +681,7 @@ JsonObject attMeta = mc.attachmentDocMeta(attUri);
 By specific URI:
   
 ```java
-String woUri = "http://host/maximo/oslc/os/mxwodetail/_QkVERk9SRC8xMDAw";
+String woUri = "http://host:port/maximo/oslc/os/mxwodetail/_QkVERk9SRC8xMDAw";
 ```
 
 Using ResourceSet
@@ -751,7 +755,7 @@ Taking the "OWNER IS ME" query for WOTRACK (workorder) application as an example
 * Query the data
 
 ```java
-ResourceSet rs = mc.resourceSet("mxwodetail").savedQuery(new SavedQuery().name("OWNER IS ME").select("*").fetch();
+ResourceSet rs = mc.resourceSet("mxwodetail").savedQuery(new SavedQuery().name("WOTRACK:OWNER IS ME")).select("*").fetch();
 ```
 
 The select("*") queryes all attributes for the filtered set of mxwodetail. As mentioned earlier, we can do a partial resource selection like select("wonum","status").
@@ -761,7 +765,7 @@ We can also do further filtering along with the saved query.
 * Query the data
 
 ```java
-ResourceSet rs = mc.resourceSet("mxwodetail").savedQuery(new SavedQuery().name("OWNER IS ME").where("status").in("APPR","WAPPR").select("wonum","status","statusdate").fetch();
+ResourceSet rs = mc.resourceSet("mxwodetail").savedQuery(new SavedQuery().name("WOTRACK:OWNER IS ME")).where(new QueryWhere().where("status").in("APPR","WAPPR")).select("wonum","status","statusdate").fetch();
 ```
 
 ## 3.7 Terms Search
@@ -797,7 +801,7 @@ mc.connect();
 * Get the ResourceSet where status  = WAPPR
 
 ```java
-ResourceSet reSet = mc.resourceSet("MXWODETAIL").where("status").equalTo("WAPPR").fetch();
+ResourceSet reSet = mc.resourceSet("MXWODETAIL").where((new QueryWhere()).where("status").equalTo("WAPPR")).fetch();
 ```
 
 * Get the first member of ResourceSet,
