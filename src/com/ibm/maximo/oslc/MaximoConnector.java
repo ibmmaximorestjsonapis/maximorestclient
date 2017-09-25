@@ -134,7 +134,7 @@ public class MaximoConnector {
 		String[] strs = url.getPath().split("/");
 		String osName = null;
 		for(int i = 0;i<strs.length;i++){
-			if(strs[i] == "os"){
+			if(strs[i].equals("os")){
 				osName = strs[i+1];
 				break;
 			}

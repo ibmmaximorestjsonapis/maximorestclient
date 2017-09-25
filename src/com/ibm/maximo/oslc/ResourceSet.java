@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import javax.json.*;
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -123,6 +124,9 @@ import javax.xml.datatype.DatatypeConfigurationException;
  *
  */
 public class ResourceSet {
+	
+	public static final Logger logger = Logger.getLogger(MaximoConnector.class.getName());
+	
 	private int pageSize = -1;
 	private String osName;
 	private String whereClause = null;
@@ -369,20 +373,53 @@ public class ResourceSet {
 	 */
 
 	public ResourceSet nextPage() throws IOException, OslcException {
-		if (this.jsonObject.containsKey("responseInfo")) {
-			this.appURI = this.jsonObject.getJsonObject("responseInfo")
-					.getJsonObject("nextPage").getString("href");
-		} else if (this.jsonObject.containsKey("oslc:responseInfo")) {
-			this.appURI = this.jsonObject.getJsonObject("oslc:responseInfo")
-					.getJsonObject("oslc:nextPage").getString("rdf:resource");
+		if(this.hasNextPage())
+		{
+			if (this.jsonObject.containsKey("responseInfo")) 
+			{
+				if(this.jsonObject.getJsonObject("responseInfo").containsKey("nextPage"))
+				{
+					this.appURI = this.jsonObject.getJsonObject("responseInfo")
+							.getJsonObject("nextPage").getString("href");
+				}
+			} 
+			else if (this.jsonObject.containsKey("oslc:responseInfo")) 
+			{
+				if(this.jsonObject.getJsonObject("oslc:responseInfo").containsKey("oslc:nextPage"))
+				{
+					this.appURI = this.jsonObject.getJsonObject("oslc:responseInfo")
+							.getJsonObject("oslc:nextPage").getString("rdf:resource");
+				}
+			}
 		}
+		else
+		{
+			logger.info("Next Page is no found");
+			return this;
+		}
+
 		this.jsonObject = this.mc.get(this.appURI);
-		if (this.jsonObject.containsKey("rdfs:member")) {
+		if (this.jsonObject.containsKey("rdfs:member")) 
+		{
 			this.jsonArray = (JsonArray) this.jsonObject.get("rdfs:member");
-		} else {
+		} 
+		else 
+		{
 			this.jsonArray = (JsonArray) this.jsonObject.get("member");
 		}
 		return this;
+	}
+	
+	public boolean hasNextPage() throws IOException, OslcException {
+		if (this.jsonObject.containsKey("responseInfo")) 
+		{
+			return this.jsonObject.getJsonObject("responseInfo").containsKey("nextPage");
+		} 
+		else if (this.jsonObject.containsKey("oslc:responseInfo")) 
+		{
+			return this.jsonObject.getJsonObject("oslc:responseInfo").containsKey("oslc:nextPage");
+		}
+		return false;
 	}
 
 	/**
