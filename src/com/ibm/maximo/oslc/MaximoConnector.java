@@ -988,7 +988,8 @@ public class MaximoConnector {
 	
 	public static String encode(String userName, String password)
 			throws UnsupportedEncodingException {
-		return (javax.xml.bind.DatatypeConverter.printBase64Binary((userName
+
+		return (Util.base64Encode((userName
 				+ ":" + password).getBytes("UTF-8")));
 	}
 
