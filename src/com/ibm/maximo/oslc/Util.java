@@ -9,6 +9,8 @@
  */
 
 package com.ibm.maximo.oslc;
+import org.apache.commons.codec.binary.Base64;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -157,5 +159,13 @@ public class Util {
 			strb.append(ch);
 		}
 		System.out.println(strb.toString());
+	}
+
+	public static String base64Encode(String in) throws UnsupportedEncodingException {
+		return new String(Base64.encodeBase64(in.getBytes("UTF-8")));
+	}
+
+	public static String base64Encode(byte[] in) {
+		return new String(Base64.encodeBase64(in));
 	}
 }

@@ -5,6 +5,7 @@
 3. Add support to bulk for ResourceSet
 4. Add new examples about new API in TestOSLCAPI.java.
 5. Fix bugs
+6. Removed references to `javax.xml.bind.DatatypeConverter.printBase64Binary` since that API is not available on Android.  It now uses commons-codec to get base64 support.
 
 # Maximo Rest Client 1.0 Released!
 
@@ -64,7 +65,7 @@ Last Release
 
 If the Internet is unavailable or it is difficult to access the central repository for some reason. The client can be installed locally. After the installation, it can be included in a Maven project as well.
 
-1. Run mvn clean install at the dictionary of library.
+1. Run `mvn clean install -Dgpg.skip` at the dictionary of library.
 2. Create a new Maven project
 3. Add following dependency to your pom.xml file
 
@@ -72,13 +73,15 @@ If the Internet is unavailable or it is difficult to access the central reposito
 <dependency>
 	<groupId>com.ibm.maximo</groupId>
 	<artifactId>maximo-restclient</artifactId>
-	<version>0.1</version>
+	<version>VERSION</version>
 </dependency>
 ```
 
+Where VERSION is the version you gave this artifact in the `pom.xml`
+
 ## 2.2 As a Java library
 
-If the Maven environment is unavailable. The Maximo Rest Client can be used as a regular reference library in Java project. As the client depends on javax-json, the javax-json library is needed as well.
+If the Maven environment is unavailable. The Maximo Rest Client can be used as a regular reference library in Java project. As the client depends on javax-json, the javax-json and commons-codec libraries is needed as well.
 
 You can get it from http://repo1.maven.org/maven2/org/glassfish/javax.json/1.0.4/ or use the Maven dependency as,
 
@@ -88,9 +91,15 @@ You can get it from http://repo1.maven.org/maven2/org/glassfish/javax.json/1.0.4
     <artifactId>javax.json</artifactId>
     <version>1.0.4</version>
 </dependency>
+<dependency>
+	<groupId>commons-codec</groupId>
+	<artifactId>commons-codec</artifactId>
+	<version>1.1</version>
+</dependency>
+
 ```
 
-When the javax.json-1.0.4.jar and maximo-restclient-0.1.jar is ready, add them to the java project as commen reference libraries.
+When the javax.json-1.0.4.jar, commons-codec-1.1.jar and maximo-restclient-0.1.jar is ready, add them to the java project as common reference libraries.
 	
 # III. Usage
 -----
