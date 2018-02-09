@@ -831,3 +831,7 @@ JsonObject jo = Json.createObjectBuilder().add("status","APPR").add("memo","appr
 ```java
 re.invokeAction("wsmethod:changeStatus", jo);
 ```
+
+# References
+
+[Java API](https://maximo-java-rest-client.github.io/maximo-java-rest-client/index.html)
