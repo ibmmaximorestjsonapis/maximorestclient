@@ -834,4 +834,4 @@ re.invokeAction("wsmethod:changeStatus", jo);
 
 # References
 
-[Java API](https://maximo-java-rest-client.github.io/maximo-java-rest-client/index.html)
+[Java API](https://ibm-maximo-dev.github.io/maximo-java-rest-client/index.html)
