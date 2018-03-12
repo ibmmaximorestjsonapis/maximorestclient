@@ -7,7 +7,7 @@
 	<version>1.0.2</version>
 
 	<name>maximo-rest-client</name>
-	<description>The Maximo REST client library provides a set of driver API's which can be consumed by an JAVA based web component that would like to interface with a Maximo instance</description>
+	<description>The IBM Maximo REST client library provides a set of driver API's which can be consumed by an Java-based web component that would like to interface with a Maximo instance.</description>
 	<url>http://www.ibm.com</url>
 
 	<licenses>
