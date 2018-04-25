@@ -1029,6 +1029,12 @@ public class MaximoConnector {
 				return con;
 			} else if (options.isFormAuth()) {
 				String appURI = uri;
+				
+				//Remove lean param from login call
+				if(appURI.endsWith("?&lean=1")){
+				     appURI = appURI.substring(0, appURI.length()-8);
+				}
+				
 				appURI += "/j_security_check";
 				URL httpURL = new URL(appURI);
 				HttpURLConnection con = null;
