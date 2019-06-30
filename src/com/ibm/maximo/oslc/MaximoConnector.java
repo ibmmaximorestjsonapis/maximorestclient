@@ -14,6 +14,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1130,8 +1131,12 @@ public class MaximoConnector {
 	}
 
 	private void setCookiesForSession(HttpURLConnection con) {
-		for (String cookie : cookies) {
-			con.setRequestProperty("Cookie", cookie.split(";", 1)[0]);
+		if (this.cookies.size() > 0) {
+			List<String> cookieList = new ArrayList<>();
+			for (String cookie : cookies) {
+				cookieList.add(cookie.split(";", 1)[0]);
+			}
+			con.setRequestProperty("Cookie", String.join(";", cookieList));
 		}
 	}
 	
