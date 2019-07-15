@@ -86,6 +86,13 @@ public class QueryWhere {
 		return this;
 	}
 	
+	public QueryWhere notEqualTo(Object value) throws DatatypeConfigurationException, UnsupportedEncodingException
+	{
+		String s = Util.stringValue(value);
+		this.setQueryToken("!="+s);
+		return this;
+	}
+	
 	public QueryWhere startsWith(String value) throws DatatypeConfigurationException, UnsupportedEncodingException
 	{
 		String s = Util.stringValue(value+"%");
