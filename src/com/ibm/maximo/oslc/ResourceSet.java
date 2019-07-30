@@ -577,7 +577,15 @@ public class ResourceSet {
 			if (this.orderBy.size()>0){
 				strb.append("&oslc.orderBy=");
 				for(String property: this.orderBy){
-					strb.append("-" + property + ",");
+					if(property.startsWith("+"))
+						//Order asc requires URL encoding
+						strb.append("%2B").append(property.substring(1) + ",");
+					else if(property.startsWith("-"))
+						//Optionally let's support explicit desc ordering
+						strb.append(property + ",");
+					else
+						//Otherwise default to desc as with previous releases
+				        strb.append("-" + property + ",");	
 				}
 				if(strb.toString().endsWith(",")){
 					strb = strb.deleteCharAt(strb.length() - 1);
