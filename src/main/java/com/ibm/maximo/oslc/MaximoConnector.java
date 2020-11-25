@@ -13,6 +13,8 @@ package com.ibm.maximo.oslc;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -316,6 +318,12 @@ public class MaximoConnector {
 			}
 			uri = uri.replace(currentHost, publicHost);
 		}
+		
+		if (options.isApikeyAuth()) {
+			uri = addApiKeyToURI(uri);
+			logger.info("URI with apikey: "+uri);
+		}
+		
 		logger.fine(uri);
 		URL httpURL = new URL(uri);
 		HttpURLConnection con = (HttpURLConnection) httpURL
@@ -374,6 +382,12 @@ public class MaximoConnector {
 			}
 			uri = uri.replace(currentHost, publicHost);
 		}
+		
+		if (options.isApikeyAuth()) {
+			uri = addApiKeyToURI(uri);
+			logger.info("URI with apikey: "+uri);
+		}
+		
 		logger.fine(uri);
 		URL httpURL = new URL(uri);
 		HttpURLConnection con = (HttpURLConnection) httpURL.openConnection();
@@ -430,6 +444,12 @@ public class MaximoConnector {
 		}
 		//LOG.isLoggable(Level.info);
 		logger.fine(uri);
+		
+		if (options.isApikeyAuth()) {
+			uri = addApiKeyToURI(uri);
+			logger.info("URI with apikey: "+uri);
+		}
+		
 		URL httpURL = new URL(uri);
 		HttpURLConnection con = (HttpURLConnection) httpURL
 								.openConnection();
@@ -479,6 +499,10 @@ public class MaximoConnector {
 	
 	public JsonObject create(String uri,JsonObject jo, Map<String,Object> headers, String... properties)
 			throws IOException, OslcException {
+		
+		if (options.isApikeyAuth()) {
+			throw new OslcException("When authenticating with apikey just read only operations are available.");
+		}
 		if(!isValid()){
 			throw new OslcException("The instance of MaximoConnector is not valid.");
 		}
@@ -553,6 +577,11 @@ public class MaximoConnector {
 	
 	public JsonObject createAttachment(String uri,byte[] data, String name,
 			String description, String meta, Map<String, Object> headers) throws IOException, OslcException {
+		
+		if (options.isApikeyAuth()) {
+			throw new OslcException("When authenticating with apikey just read only operations are available.");
+		}
+
 		if(!isValid()){
 			throw new OslcException("The instance of MaximoConnector is not valid.");
 		}
@@ -622,6 +651,10 @@ public class MaximoConnector {
 	
 	public synchronized JsonObject update(String uri, JsonObject jo, Map<String,Object> headers, String... properties)
 			throws IOException, OslcException {
+
+		if (options.isApikeyAuth()) {
+			throw new OslcException("When authenticating with apikey just read only operations are available.");
+		}
 		if(!isValid()){
 			throw new OslcException("The instance of MaximoConnector is not valid.");
 		}
@@ -681,6 +714,11 @@ public class MaximoConnector {
 	
 	public synchronized JsonObject merge(String uri, JsonObject jo, Map<String,Object> headers, String... properties)
 			throws IOException, OslcException {
+
+		if (options.isApikeyAuth()) {
+			throw new OslcException("When authenticating with apikey just read only operations are available.");
+		}
+
 		if(!isValid()){
 			throw new OslcException("The instance of MaximoConnector is not valid.");
 		}
@@ -994,11 +1032,11 @@ public class MaximoConnector {
 				+ ":" + password).getBytes("UTF-8")));
 	}
 
-	protected HttpURLConnection setAuth(String uri) throws IOException {
+	protected HttpURLConnection setAuth(String uri) throws IOException, OslcException {
 		return this.setAuth(uri, null);
 	}
 	
-	protected HttpURLConnection setAuth(String uri, Proxy proxy) throws IOException {
+	protected HttpURLConnection setAuth(String uri, Proxy proxy) throws IOException, OslcException {
 		if (this.options.getUser() != null
 				&& this.options.getPassword() != null) {
 			if (options.isBasicAuth()) {
@@ -1056,6 +1094,17 @@ public class MaximoConnector {
 				outputStream.close();
 				return con;
 			}
+		} else if (options.isApikeyAuth()) {
+			
+			URL httpURL = new URL(addApiKeyToURI(uri));
+
+			HttpURLConnection con = null;
+			if(proxy != null){
+				con = (HttpURLConnection) httpURL.openConnection(proxy);
+			}else{
+				con = (HttpURLConnection) httpURL.openConnection();
+			}
+			return con;
 		}
 		return null;
 	}
@@ -1223,5 +1272,24 @@ public class MaximoConnector {
 			logger.fine("Logout");
 		}
 		this.valid = false;
+	}
+	
+	private String addApiKeyToURI(String uri) throws OslcException {
+		
+		String apikey = this.options.getApikey();
+		if (apikey == null) {
+			throw new OslcException(500, "No apikey in configuration");
+		}
+		try {
+			URI oldUri = new URI(uri);
+		    URI newUri = new URI(oldUri.getScheme(), 
+		    		oldUri.getAuthority(), 
+		    		oldUri.getPath(),
+		    		oldUri.getQuery() == null ? "apikey="+apikey : oldUri.getQuery() + "&" + "apikey=" + apikey,
+		    		oldUri.getFragment());
+		    return newUri.toString();
+		} catch (URISyntaxException use) {
+			throw new OslcException(500, "Error building url", use);			
+		}
 	}
 }

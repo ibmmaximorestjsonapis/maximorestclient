@@ -11,6 +11,7 @@
 package com.ibm.maximo.oslc;
 import java.util.*;
 
+@SuppressWarnings({"rawtypes","unchecked"})
 public class QuerySelect {
 	
 	//a.b.*,a.c,x.y.z,x.f.g,x.y.e == a{b{*},c},x{y{z,e},f{g}}

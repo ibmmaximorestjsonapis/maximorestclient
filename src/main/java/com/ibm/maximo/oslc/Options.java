@@ -35,8 +35,10 @@ public class Options {
 	public static final String AUTH_BASIC = "basic";
 	public static final String AUTH_MAXAUTH = "maxauth";
 	public static final String AUTH_FORM = "form";
+	public static final String AUTH_APIKEY = "apikey";
 	private String user;
 	private String password;
+	private String apikey;
 	private boolean ssl = false;
 	private boolean mt = false;
 	private boolean lean = false;
@@ -111,6 +113,12 @@ public class Options {
 		return this;
 	}
 	
+	public Options apikey(String apikey)
+	{
+		this.apikey = apikey;
+		return this;
+	}
+	
 	public Options AppURI(String appURI)
 	{
 		this.appURI = appURI;
@@ -137,6 +145,11 @@ public class Options {
 		return this.user;
 	}
 	
+	String getApikey()
+	{
+		return this.apikey;
+	}
+	
 	public boolean isBasicAuth()
 	{
 		return this.authMode.equals(AUTH_BASIC);
@@ -150,6 +163,11 @@ public class Options {
 	public boolean isMaxAuth()
 	{
 		return this.authMode.equals(AUTH_MAXAUTH);
+	}
+	
+	public boolean isApikeyAuth()
+	{
+		return this.authMode.equals(AUTH_APIKEY);
 	}
 	
 	public boolean isMultiTenancy()

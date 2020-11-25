@@ -13,9 +13,8 @@ package com.ibm.maximo.oslc;
 import javax.json.JsonObject;
 
 public class OslcException extends Exception {
-	/**
-	 * 
-	 */
+
+	private static final long serialVersionUID = 1L;
 	private int errorCode = 400;
 
 	public OslcException(int errorCode, String message, Throwable t) {
