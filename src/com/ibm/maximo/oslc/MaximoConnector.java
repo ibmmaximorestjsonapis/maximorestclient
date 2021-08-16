@@ -1029,7 +1029,12 @@ public class MaximoConnector {
 				return con;
 			} else if (options.isFormAuth()) {
 				String appURI = uri;
-				appURI += "/j_security_check";
+				if (isLean()){
+					appURI = appURI.replace("?&lean=1", "/j_security_check?&lean=1");
+				}
+				else {
+					appURI += "/j_security_check";
+				}
 				URL httpURL = new URL(appURI);
 				HttpURLConnection con = null;
 				if(proxy != null){
